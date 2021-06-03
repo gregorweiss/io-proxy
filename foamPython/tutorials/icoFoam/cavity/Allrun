@@ -1,0 +1,5 @@
+#!/bin/bash
+
+./Allrun.pre
+
+python3 ../../../icoFoam.py

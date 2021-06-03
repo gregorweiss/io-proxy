@@ -1,0 +1,15 @@
+gignore/
+
+*__pycache__
+
+# Results:
+*.[0-9]
+
+# Cython stuff:
+*.c
+*build
+*.so
+
+# Ignore everything in the constant folder, but still keep it:
+constant/*
+!constant/.a
