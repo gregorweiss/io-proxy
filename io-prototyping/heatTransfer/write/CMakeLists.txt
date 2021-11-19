@@ -22,6 +22,16 @@ target_link_libraries(heatTransfer_write_ascii
   MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
 )
 
+add_executable(heatTransfer_write_binary
+  main.cpp
+  HeatTransfer.cpp
+  Settings.cpp
+  IO_binary.cpp
+)
+target_link_libraries(heatTransfer_write_binary
+  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+)
+
 add_executable(heatTransfer_write_mpiio_write
   main.cpp
   HeatTransfer.cpp
