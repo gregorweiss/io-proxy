@@ -76,3 +76,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
         out << std::endl;
     }
 }
+
+void IO::read(const int step, std::vector<double> &ht, const Settings &s,
+               MPI_Comm comm)
+{ std::cout << "IO::read not implemented for ascii format." << std::endl; }

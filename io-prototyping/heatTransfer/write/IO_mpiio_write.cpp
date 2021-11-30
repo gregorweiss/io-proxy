@@ -35,7 +35,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     (
         comm,
         m_outputfilename.c_str(),
-        MPI_MODE_CREATE | MPI_MODE_WRONLY,
+        MPI_MODE_CREATE | MPI_MODE_RDWR,
         MPI_INFO_NULL,
         &fh
     );
@@ -51,6 +51,15 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
 {
     // Set file pointer
     int offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
-    MPI_File_seek( fh, offset, MPI_SEEK_SET);
-    MPI_File_write(fh, ht.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
+    MPI_File_seek( fh, offset, MPI_SEEK_SET );
+    MPI_File_write( fh, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE );
+}
+
+void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
+              MPI_Comm comm)
+{
+    // Set file pointer
+    int offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
+    MPI_File_seek( fh, offset, MPI_SEEK_SET );
+    MPI_File_read( fh, buffer.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE );
 }

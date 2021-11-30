@@ -107,7 +107,45 @@ int main(int argc, char *argv[])
             auto avg_time = std::accumulate(times.begin(), times.end(), 0.0) / static_cast<double>(times.size());
             auto max_time = *std::max_element(times.begin(), times.end());
             auto min_time = *std::min_element(times.begin(), times.end());
-            std::cout << "global size [GB] " << GB
+            std::cout << "Writing global size [GB] " << GB
+                      << " local size [GB] " << lGB
+                      << " perf [GB/s] " << GB/avg_time
+                      << " max perf [GB/s] " << GB / (min_time)
+                      << " min perf [GB/s] " << GB / (max_time)
+                      << std::endl;
+
+            MPI_Barrier(mpiHeatTransferComm);
+        }
+
+        //- Reading
+        for (unsigned int t = 1; t <= settings.steps; ++t)
+        {
+            std::vector<double> buffer( settings.ndx*settings.ndy, 0.0 );
+
+            MPI_Barrier(mpiHeatTransferComm);
+
+            if (rank == 0)
+                std::cout << "Reading step " << t << ":\n";
+
+            double timeIO_start = 0.0;
+            unsigned int nioit = 0;
+            std::vector<double> times(settings.ioiterations - settings.ioit0, 0.0);
+            for (unsigned int it = 0; it < settings.ioiterations; ++it)
+            {
+                if (it >= settings.ioit0)
+                { timeIO_start = MPI_Wtime(); }
+
+                io.read(t, buffer, settings, mpiHeatTransferComm);
+
+                if (it >= settings.ioit0)
+                { times[it - settings.ioit0] = MPI_Wtime() - timeIO_start; }
+            }
+            auto GB = static_cast<double>(settings.gndx*settings.gndy*sizeof(double)) / 1.0e9;
+            auto lGB = static_cast<double>(settings.ndx*settings.ndy*sizeof(double)) / 1.0e9;
+            auto avg_time = std::accumulate(times.begin(), times.end(), 0.0) / static_cast<double>(times.size());
+            auto max_time = *std::max_element(times.begin(), times.end());
+            auto min_time = *std::min_element(times.begin(), times.end());
+            std::cout << "Reading global size [GB] " << GB
                       << " local size [GB] " << lGB
                       << " perf [GB/s] " << GB/avg_time
                       << " max perf [GB/s] " << GB / (min_time)

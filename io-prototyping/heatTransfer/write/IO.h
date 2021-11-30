@@ -14,6 +14,7 @@
 #include "HeatTransfer.h"
 #include "Settings.h"
 
+#include <vector>
 #include <mpi.h>
 
 class IO
@@ -23,6 +24,8 @@ public:
     ~IO();
     void write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm);
+    void read(const int step, std::vector<double> &buffer, const Settings &s,
+              MPI_Comm comm);
 
 private:
     std::string m_outputfilename;

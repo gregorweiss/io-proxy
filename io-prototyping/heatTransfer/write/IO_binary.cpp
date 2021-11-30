@@ -67,3 +67,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
 
     out.write(reinterpret_cast<const char*>(ht.data()), static_cast<std::streamsize>(s.ndx*s.ndy));
 }
+
+void IO::read(const int step, std::vector<double> &ht, const Settings &s,
+               MPI_Comm comm)
+{ std::cout << "IO::read not implemented for binary format." << std::endl; }

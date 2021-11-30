@@ -12,6 +12,8 @@
 
 #include <string>
 
+#include <iostream> // std::cout
+
 #include <adios2.h>
 
 adios2::ADIOS ad;
@@ -88,3 +90,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
         bpWriter.EndStep();
     }
 }
+
+void IO::read(const int step, std::vector<double> &ht, const Settings &s,
+               MPI_Comm comm)
+{ std::cout << "IO::read not implemented for adios2 format." << std::endl; }

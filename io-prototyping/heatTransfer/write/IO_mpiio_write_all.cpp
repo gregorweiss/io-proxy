@@ -16,7 +16,8 @@
 
 MPI_File fh;
 MPI_Datatype filetype;
-int count;
+int mpiio_count;
+int mpiio_rank, mpiio_size;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
@@ -38,16 +39,15 @@ IO::IO(const Settings &s, MPI_Comm comm)
     dargs[0] = dargs[1] = MPI_DISTRIBUTE_DFLT_DARG;
 
     // Set count of buffer, i.e. size of ht.data()
-    count = s.ndx * s.ndy;
+    mpiio_count = s.ndx * s.ndy;
 
     // Create array MPI_Datatype
-    int rank, size;
-    MPI_Comm_rank(comm, &rank); 
-    MPI_Comm_size(comm, &size); 
+    MPI_Comm_rank(comm, &mpiio_rank);
+    MPI_Comm_size(comm, &mpiio_size);
     MPI_Type_create_darray
     (
-        size,
-        rank,
+        mpiio_size,
+        mpiio_rank,
         2,
         gsizes,
         distribs,
@@ -64,20 +64,9 @@ IO::IO(const Settings &s, MPI_Comm comm)
     (
         comm,
         m_outputfilename.c_str(),
-        MPI_MODE_CREATE | MPI_MODE_WRONLY,
+        MPI_MODE_CREATE | MPI_MODE_RDWR,
         MPI_INFO_NULL,
         &fh
-    );
-
-    // Set file view
-    MPI_File_set_view
-    (
-        fh,
-        0,
-        MPI_DOUBLE,
-        filetype,
-        "native",
-        MPI_INFO_NULL
     );
 }
 
@@ -90,5 +79,33 @@ IO::~IO()
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    MPI_File_write_all(fh, ht.data(), count, MPI_DOUBLE, MPI_STATUS_IGNORE);
+    // Set file view
+    int offset = mpiio_size * step * mpiio_count * sizeof(double);
+    MPI_File_set_view
+    (
+        fh,
+        offset,
+        MPI_DOUBLE,
+        filetype,
+        "native",
+        MPI_INFO_NULL
+    );
+    MPI_File_write_all(fh, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
+}
+
+void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
+              MPI_Comm comm)
+{
+    // Set file view
+    int offset = mpiio_size * step * mpiio_count * sizeof(double);
+    MPI_File_set_view
+    (
+        fh,
+        offset,
+        MPI_DOUBLE,
+        filetype,
+        "native",
+        MPI_INFO_NULL
+    );
+    MPI_File_read_all(fh, buffer.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }
