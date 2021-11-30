@@ -1,0 +1,6 @@
+# Folders
+build
+run
+
+# Temporary files
+*.swp

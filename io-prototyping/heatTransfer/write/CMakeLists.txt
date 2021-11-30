@@ -62,6 +62,16 @@ target_link_libraries(heatTransfer_write_mpiio_write_all
   MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
 )
 
+add_executable(heatTransfer_write_mpiio_write_all_indexed
+  main.cpp
+  HeatTransfer.cpp
+  Settings.cpp
+  IO_mpiio_write_all_indexed.cpp
+)
+target_link_libraries(heatTransfer_write_mpiio_write_all_indexed
+  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+)
+
 if(ADIOS2_HAVE_HDF5)
   add_executable(heatTransfer_write_hdf5
     main.cpp

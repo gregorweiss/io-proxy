@@ -77,15 +77,17 @@ int main(int argc, char *argv[])
         io.write(0, ht, settings, mpiHeatTransferComm);
 
         for (unsigned int t = 1; t <= settings.steps; ++t)
-        {
-            if (rank == 0)
-                std::cout << "Step " << t << ":\n";
+        { 
             for (unsigned int iter = 1; iter <= settings.iterations; ++iter)
             {
                 ht.iterate();
                 ht.exchange(mpiHeatTransferComm);
                 ht.heatEdges();
             }
+
+            MPI_Barrier(mpiHeatTransferComm);
+            if (rank == 0)
+                std::cout << "Step " << t << ":\n";
 
             double timeIO_start = 0.0;
             unsigned int nioit = 0;
@@ -101,21 +103,25 @@ int main(int argc, char *argv[])
                 { times[it - settings.ioit0] = MPI_Wtime() - timeIO_start; }
             }
             auto GB = static_cast<double>(settings.gndx*settings.gndy*sizeof(double)) / 1.0e9;
+            auto lGB = static_cast<double>(settings.ndx*settings.ndy*sizeof(double)) / 1.0e9;
             auto avg_time = std::accumulate(times.begin(), times.end(), 0.0) / static_cast<double>(times.size());
             auto max_time = *std::max_element(times.begin(), times.end());
             auto min_time = *std::min_element(times.begin(), times.end());
             std::cout << "global size [GB] " << GB
+                      << " local size [GB] " << lGB
                       << " perf [GB/s] " << GB/avg_time
                       << " max perf [GB/s] " << GB / (min_time)
                       << " min perf [GB/s] " << GB / (max_time)
                       << std::endl;
+
+            MPI_Barrier(mpiHeatTransferComm);
         }
 
         MPI_Barrier(mpiHeatTransferComm);
 
-        double timeEnd = MPI_Wtime();
-        if (rank == 0)
-            std::cout << "Total runtime = " << timeEnd - timeStart << "s\n";
+        //double timeEnd = MPI_Wtime();
+        //if (rank == 0)
+            //std::cout << "Total runtime = " << timeEnd - timeStart << "s\n";
     }
     catch (std::invalid_argument &e) // command-line argument errors
     {

@@ -18,19 +18,17 @@
 
 MPI_File fh;
 int mpiio_count;
-int mpiio_offset;
+int mpiio_rank, mpiio_size;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
     m_outputfilename = s.outputfile + ".mpiio_write_at";
 
-    int rank, size;
-    MPI_Comm_rank(comm, &rank); 
-    MPI_Comm_size(comm, &size); 
+    MPI_Comm_rank(comm, &mpiio_rank); 
+    MPI_Comm_size(comm, &mpiio_size); 
 
     // Set count of buffer, i.e. size of ht.data()
     mpiio_count = s.ndx * s.ndy;
-    mpiio_offset = rank * s.ndx * s.ndy * sizeof(double);
 
     // Open file
     MPI_File_open
@@ -51,5 +49,7 @@ IO::~IO()
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    MPI_File_write_at(fh, mpiio_offset, ht.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
+
+    int offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
+    MPI_File_write_at(fh, offset, ht.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }
