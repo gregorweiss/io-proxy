@@ -14,60 +14,31 @@
 #include <iomanip>
 #include <iostream>
 
-static std::ofstream of;
-static std::streambuf *buf;
+static std::fstream fs;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    m_outputfilename = s.outputfile;
-
-    if (m_outputfilename == "cout")
-    {
-        buf = std::cout.rdbuf();
-    }
-    else
-    {
-        m_outputfilename = MakeFilename(s.outputfile, ".txt", s.rank);
-        of.open(m_outputfilename);
-        buf = of.rdbuf();
-    }
+    m_outputfilename = MakeFilename(s.outputfile, ".dat", s.rank);
+    fs.open( m_outputfilename, std::ios_base::in | std::ios_base::out | std::ios_base::app );
 }
 
 IO::~IO()
 {
-    if (m_outputfilename != "cout")
-    {
-        of.close();
-    }
+    fs.close();
 }
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    std::ostream out(buf);
-    if (step == 0)
-    {
-        out << "rank=" << s.rank << " size=" << s.ndx << "x" << s.ndy
-            << " offsets=" << s.offsx << ":" << s.offsy << " step=" << step
-            << std::endl;
-        out << " time   row   columns " << s.offsy << "..."
-            << s.offsy + s.ndy - 1 << std::endl;
-        out << "        ";
-        for (unsigned int j = 1; j <= s.ndy; ++j)
-        {
-            out << std::setw(9) << s.offsy + j - 1;
-        }
-        out << "\n-------------------------------------------------------------"
-               "-\n";
-    }
-    else
-    {
-        out << std::endl;
-    }
-
-    out.write(reinterpret_cast<const char*>(ht.data()), static_cast<std::streamsize>(s.ndx*s.ndy));
+    auto pos = static_cast<std::streamsize>(step*s.ndx*s.ndy*sizeof(double));
+    fs.seekp(pos);
+    fs.write(reinterpret_cast<const char*>(ht.data_noghost().data()), static_cast<std::streamsize>(s.ndx*s.ndy*sizeof(double)));
 }
 
-void IO::read(const int step, std::vector<double> &ht, const Settings &s,
+void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
                MPI_Comm comm)
-{ std::cout << "IO::read not implemented for binary format." << std::endl; }
+{
+    auto pos = static_cast<std::streamsize>(step*s.ndx*s.ndy*sizeof(double));
+    fs.seekg(pos);
+    fs.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(s.ndx*s.ndy*sizeof(double)));
+}
