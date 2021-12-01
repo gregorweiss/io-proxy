@@ -18,8 +18,11 @@
 
 adios2::ADIOS ad;
 adios2::Engine bpWriter;
-adios2::Variable<double> varT;
+adios2::Engine bpReader;
+adios2::Variable<double> varTout;
+adios2::Variable<double> varTinp;
 adios2::Variable<unsigned int> varGndx;
+int mpiio_rank;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
@@ -27,46 +30,73 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     ad = adios2::ADIOS(s.configfile, comm);
 
-    adios2::IO bpio = ad.DeclareIO("writer");
-    if (!bpio.InConfigFile())
+    MPI_Comm_rank(comm, &mpiio_rank);
+
+    adios2::IO bpout = ad.DeclareIO("writer");
+    if (!bpout.InConfigFile())
     {
         // if not defined by user, we can change the default settings
         // BPFile is the default engine
-        bpio.SetEngine("BPFile");
-        bpio.SetParameters({{"num_threads", "1"}});
+        bpout.SetEngine("BPFile");
+        bpout.SetParameters({{"num_threads", "1"}});
 
         // ISO-POSIX file output is the default transport (called "File")
         // Passing parameters to the transport
 #ifdef _WIN32
-        bpio.AddTransport("File", {{"Library", "stdio"}});
+        bpout.AddTransport("File", {{"Library", "stdio"}});
 #else
-        bpio.AddTransport("File", {{"Library", "posix"}});
+        bpout.AddTransport("File", {{"Library", "posix"}});
+#endif
+    }
+    adios2::IO bpinp = ad.DeclareIO("reader");
+    if (!bpinp.InConfigFile())
+    {
+        // if not defined by user, we can change the default settings
+        // BPFile is the default engine
+        bpinp.SetEngine("BPFile");
+        bpinp.SetParameters({{"num_threads", "1"}});
+
+        // ISO-POSIX file output is the default transport (called "File")
+        // Passing parameters to the transport
+#ifdef _WIN32
+        bpinp.AddTransport("File", {{"Library", "stdio"}});
+#else
+        bpinp.AddTransport("File", {{"Library", "posix"}});
 #endif
     }
 
     // define T as 2D global array
-    varT = bpio.DefineVariable<double>(
+    varTout = bpout.DefineVariable<double>
+    (
         "T",
         // Global dimensions
         {s.gndx, s.gndy},
         // starting offset of the local array in the global space
         {s.offsx, s.offsy},
         // local size, could be defined later using SetSelection()
-        {s.ndx, s.ndy});
+        {s.ndx, s.ndy}
+    );
+    varTinp = bpinp.DefineVariable<double>( "T" );
 
-    if (bpio.EngineType() == "BP3")
-    {
-        varT.SetMemorySelection({{1, 1}, {s.ndx + 2, s.ndy + 2}});
-    }
+    //if (bpio.EngineType() == "BP3")
+    //{
+        //varT.SetMemorySelection({{1, 1}, {s.ndx + 2, s.ndy + 2}});
+    //}
 
-    bpWriter = bpio.Open(m_outputfilename, adios2::Mode::Write, comm);
+    bpWriter = bpout.Open(m_outputfilename, adios2::Mode::Write, comm);
+    bpReader = bpinp.Open(m_outputfilename, adios2::Mode::Read, comm);
 
     // Promise that we are not going to change the variable sizes nor add new
     // variables
     bpWriter.LockWriterDefinitions();
+    bpReader.LockReaderSelections();
 }
 
-IO::~IO() { bpWriter.Close(); }
+IO::~IO()
+{
+    bpWriter.Close();
+    bpReader.Close();
+}
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
@@ -79,18 +109,25 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     if (bpWriter.Type() == "BP3")
     {
         bpWriter.BeginStep();
-        bpWriter.Put<double>(varT, ht.data());
+        bpWriter.Put<double>(varTout, ht.data_noghost().data()); //ht.data());
         bpWriter.EndStep();
     }
     else
     {
         bpWriter.BeginStep();
         std::vector<double> v = ht.data_noghost();
-        bpWriter.Put<double>(varT, v.data());
+        bpWriter.Put<double>(varTout, v.data());
         bpWriter.EndStep();
     }
 }
 
-void IO::read(const int step, std::vector<double> &ht, const Settings &s,
+void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
                MPI_Comm comm)
-{ std::cout << "IO::read not implemented for adios2 format." << std::endl; }
+{
+    bpReader.BeginStep( adios2::StepMode::Read );
+    auto blocksInfo = bpReader.BlocksInfo( varTinp, bpReader.CurrentStep() );
+    auto& info = blocksInfo[ mpiio_rank ];
+    varTinp.SetBlockSelection( info.BlockID );
+    bpReader.Get( varTinp, buffer.data() );
+    bpReader.EndStep();
+}

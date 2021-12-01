@@ -118,10 +118,11 @@ int main(int argc, char *argv[])
         }
 
         //- Reading
+        std::vector<double> buffer( settings.ndx*settings.ndy, 0.0 );
+        io.read(0, buffer, settings, mpiHeatTransferComm);
+
         for (unsigned int t = 1; t <= settings.steps; ++t)
         {
-            std::vector<double> buffer( settings.ndx*settings.ndy, 0.0 );
-
             MPI_Barrier(mpiHeatTransferComm);
 
             if (rank == 0)

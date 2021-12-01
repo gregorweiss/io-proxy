@@ -46,7 +46,38 @@
         <transport type="File">
             
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="stdio"/>
+            <parameter key="Library" value="POSIX"/>
+
+            <!-- For read/write, Microseconds (default), Milliseconds, Seconds,
+                 Minutes, Hours. open/close always in Microseconds -->
+            <parameter key="ProfileUnits" value="Microseconds"/>
+
+        </transport>
+
+    </io>
+
+
+    <!--=======================================
+           Configuration for the Reader
+        =======================================-->
+
+    <io name="reader">
+        <engine type="File">
+
+            <!-- for vectorized memory operations, make sure your system
+                 enables threads-->
+            <parameter key="Threads" value="1"/>
+
+            <!-- Microseconds (default), Milliseconds, Seconds,
+                 Minutes, Hours -->
+            <parameter key="ProfileUnits" value="Microseconds"/>
+
+        </engine>
+
+        <transport type="File">
+
+            <!-- POSIX, stdio (C FILE*), fstream (C++) -->
+            <parameter key="Library" value="POSIX"/>
             
             <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours. open/close always in Microseconds -->
