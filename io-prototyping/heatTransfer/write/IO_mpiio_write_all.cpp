@@ -24,19 +24,13 @@ IO::IO(const Settings &s, MPI_Comm comm)
     m_outputfilename = s.outputfile + ".mpiio_write_all";
 
     // Set global and local sizes
-    int psizes[2];
-    psizes[0] = s.npx;
-    psizes[1] = s.npy;
-    int gsizes[2];
-    gsizes[0] = s.gndx;
-    gsizes[1] = s.gndy;
-    int globsize = s.gndx * s.gndy;
+    const int psizes[2] = { static_cast<const int>(s.npx), static_cast<const int>(s.npy) };
+    const int gsizes[2] = { static_cast<const int>(s.gndx), static_cast<const int>(s.gndy) };
+    const int globsize  =   static_cast<const int>(s.gndx * s.gndy);
 
     // Set MPI distribution settings
-    int distribs[2];
-    distribs[0] = distribs[1] = MPI_DISTRIBUTE_BLOCK;
-    int dargs[2];
-    dargs[0] = dargs[1] = MPI_DISTRIBUTE_DFLT_DARG;
+    constexpr int distribs[2] = { MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_BLOCK };
+    constexpr int dargs[2] = { MPI_DISTRIBUTE_DFLT_DARG, MPI_DISTRIBUTE_DFLT_DARG } ;
 
     // Set count of buffer, i.e. size of ht.data()
     mpiio_count = s.ndx * s.ndy;
@@ -80,7 +74,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
     // Set file view
-    int offset = mpiio_size * step * mpiio_count * sizeof(double);
+    MPI_Offset offset = mpiio_size * step * mpiio_count * sizeof(double);
     MPI_File_set_view
     (
         fh,
@@ -97,7 +91,7 @@ void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm)
 {
     // Set file view
-    int offset = mpiio_size * step * mpiio_count * sizeof(double);
+    MPI_Offset offset = mpiio_size * step * mpiio_count * sizeof(double);
     MPI_File_set_view
     (
         fh,

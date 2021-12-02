@@ -50,7 +50,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
 
-    int offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
+    MPI_Offset offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
     MPI_File_write_at(fh, offset, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }
 
@@ -58,6 +58,6 @@ void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm)
 {
 
-    int offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
+    MPI_Offset offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
     MPI_File_read_at(fh, offset, buffer.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }

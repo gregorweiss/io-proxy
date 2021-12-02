@@ -28,7 +28,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     m_outputfilename = s.outputfile + ".mpiio_write_all_indexed";
 
     // Set global size
-    int globsize = s.gndx * s.gndy;
+    const int globsize = s.gndx * s.gndy;
 
     // Set count of buffer, i.e. size of ht.data()
     mpiio_count = s.ndx * s.ndy;
@@ -101,7 +101,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
     // Set file view
-    int offset = mpiio_size * step * mpiio_count * sizeof(double);
+    MPI_Offset offset = mpiio_size * step * mpiio_count * sizeof(double);
     MPI_File_set_view
     (
         fh,
@@ -118,7 +118,7 @@ void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm)
 {
     // Set file view
-    int offset = mpiio_size * step * mpiio_count * sizeof(double);
+    MPI_Offset offset = mpiio_size * step * mpiio_count * sizeof(double);
     MPI_File_set_view
     (
         fh,
