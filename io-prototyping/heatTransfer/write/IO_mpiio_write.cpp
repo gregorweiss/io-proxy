@@ -29,7 +29,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     // Set count of buffer, i.e. size of ht.data()
     mpiio_count = s.ndx * s.ndy;
-    
+   
     // Open file
     MPI_File_open
     (
@@ -39,6 +39,10 @@ IO::IO(const Settings &s, MPI_Comm comm)
         MPI_INFO_NULL,
         &fh
     );
+
+    // Set initial rank-related offset
+    MPI_Offset offset = mpiio_rank * mpiio_count * sizeof(double);
+    MPI_File_seek( fh, offset, MPI_SEEK_SET );
 }
 
 IO::~IO()
@@ -49,17 +53,31 @@ IO::~IO()
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    // Set file pointer
-    MPI_Offset offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
-    MPI_File_seek( fh, offset, MPI_SEEK_SET );
     MPI_File_write( fh, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE );
+
+    // Set file pointer to next time step (Assumes sequentiell writes.)
+    // Prevents MPI_Offset overflow.
+    MPI_Offset offset = ( mpiio_size - 1 ) * mpiio_count * sizeof(double);
+    MPI_File_seek( fh, offset, MPI_SEEK_CUR );
 }
 
 void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm)
 {
-    // Set file pointer
-    MPI_Offset offset = ( mpiio_rank + mpiio_size*step ) * mpiio_count * sizeof(double);
-    MPI_File_seek( fh, offset, MPI_SEEK_SET );
+    // We avoid extending the IO interface by a file pointer reset functionality
+    // by restoring the file pointer when reading the first time step.
+    // Definitly violates SRP.
+    if ( step == 0 ) 
+    {
+        // Set initial rank-related offset
+        MPI_Offset offset = mpiio_rank * mpiio_count * sizeof(double);
+        MPI_File_seek( fh, offset, MPI_SEEK_SET );
+    }
+
     MPI_File_read( fh, buffer.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE );
+
+    // Set file pointer to next time step. Assumes sequentiell reads!
+    // Prevents MPI_Offset overflow.
+    MPI_Offset offset = ( mpiio_size - 1 ) * mpiio_count * sizeof(double);
+    MPI_File_seek( fh, offset, MPI_SEEK_CUR );
 }

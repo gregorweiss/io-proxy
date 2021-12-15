@@ -38,6 +38,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // Create array MPI_Datatype
     MPI_Comm_rank(comm, &mpiio_rank);
     MPI_Comm_size(comm, &mpiio_size);
+    MPI_Datatype darraytype;
     MPI_Type_create_darray
     (
         mpiio_size,
@@ -49,10 +50,15 @@ IO::IO(const Settings &s, MPI_Comm comm)
         psizes,
         MPI_ORDER_C,
         MPI_DOUBLE,
-        &filetype
+        &darraytype
     );
-    MPI_Type_commit(&filetype);
     
+    MPI_Aint lb     = 0;
+    MPI_Aint extend = static_cast<MPI_Aint>( globsize * sizeof(double) );
+    MPI_Type_create_resized(darraytype, lb, extend, &filetype);
+
+    MPI_Type_commit(&filetype);
+   
     // Open file
     MPI_File_open
     (
@@ -61,6 +67,18 @@ IO::IO(const Settings &s, MPI_Comm comm)
         MPI_MODE_CREATE | MPI_MODE_RDWR,
         MPI_INFO_NULL,
         &fh
+    );
+
+    // Set file view
+    MPI_Offset offset = 0;
+    MPI_File_set_view
+    (
+        fh,
+        offset,
+        MPI_DOUBLE,
+        filetype,
+        "native",
+        MPI_INFO_NULL
     );
 }
 
@@ -73,33 +91,11 @@ IO::~IO()
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    // Set file view
-    MPI_Offset offset = mpiio_size * step * mpiio_count * sizeof(double);
-    MPI_File_set_view
-    (
-        fh,
-        offset,
-        MPI_DOUBLE,
-        filetype,
-        "native",
-        MPI_INFO_NULL
-    );
     MPI_File_write_all(fh, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }
 
 void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm)
 {
-    // Set file view
-    MPI_Offset offset = mpiio_size * step * mpiio_count * sizeof(double);
-    MPI_File_set_view
-    (
-        fh,
-        offset,
-        MPI_DOUBLE,
-        filetype,
-        "native",
-        MPI_INFO_NULL
-    );
     MPI_File_read_all(fh, buffer.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }

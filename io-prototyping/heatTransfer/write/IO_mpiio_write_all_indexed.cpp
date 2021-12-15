@@ -70,14 +70,20 @@ IO::IO(const Settings &s, MPI_Comm comm)
     std::sort( indexes.begin(), indexes.end() ); // monotonically increasing for file view
 
     // Create indexed MPI_Datatype
+    MPI_Datatype indexedtype;
     MPI_Type_create_indexed_block
     (
         mpiio_count,
         1,
         indexes.data(),
         MPI_DOUBLE,
-        &filetype
+        &indexedtype
     );
+
+    MPI_Aint lb     = 0;
+    MPI_Aint extend = static_cast<MPI_Aint>( globsize * sizeof(double) );
+    MPI_Type_create_resized(indexedtype, lb, extend, &filetype);
+
     MPI_Type_commit(&filetype);
     
     // Open file
@@ -88,6 +94,17 @@ IO::IO(const Settings &s, MPI_Comm comm)
         MPI_MODE_CREATE | MPI_MODE_RDWR,
         MPI_INFO_NULL,
         &fh
+    );
+
+    MPI_Offset offset = 0; //mpiio_size * step * mpiio_count * sizeof(double);
+    MPI_File_set_view
+    (
+        fh,
+        offset,
+        MPI_DOUBLE,
+        filetype,
+        "native",
+        MPI_INFO_NULL
     );
 }
 
@@ -100,33 +117,11 @@ IO::~IO()
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    // Set file view
-    MPI_Offset offset = mpiio_size * step * mpiio_count * sizeof(double);
-    MPI_File_set_view
-    (
-        fh,
-        offset,
-        MPI_DOUBLE,
-        filetype,
-        "native",
-        MPI_INFO_NULL
-    );
     MPI_File_write_all(fh, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }
 
 void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm)
 {
-    // Set file view
-    MPI_Offset offset = mpiio_size * step * mpiio_count * sizeof(double);
-    MPI_File_set_view
-    (
-        fh,
-        offset,
-        MPI_DOUBLE,
-        filetype,
-        "native",
-        MPI_INFO_NULL
-    );
     MPI_File_read_all(fh, buffer.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }
