@@ -20,6 +20,8 @@
 #include <numeric>
 #include <algorithm>
 
+#include <cmath>
+
 #include "HeatTransfer.h"
 #include "IO.h"
 #include "Settings.h"
@@ -69,12 +71,8 @@ int main(int argc, char *argv[])
         IO io(settings, mpiHeatTransferComm);
 
         ht.init(false);
-        // ht.printT("Initialized T:", mpiHeatTransferComm);
         ht.heatEdges();
         ht.exchange(mpiHeatTransferComm);
-        // ht.printT("Heated T:", mpiHeatTransferComm);
-
-        io.write(0, ht, settings, mpiHeatTransferComm);
 
         for (unsigned int t = 1; t <= settings.steps; ++t)
         { 
@@ -85,78 +83,47 @@ int main(int argc, char *argv[])
                 ht.heatEdges();
             }
 
-            MPI_Barrier(mpiHeatTransferComm);
-            if (rank == 0)
-                std::cout << "Step " << t << ":\n";
-
-            double timeIO_start = 0.0;
-            unsigned int nioit = 0;
-            std::vector<double> times(settings.ioiterations - settings.ioit0, 0.0);
-            for (unsigned int it = 0; it < settings.ioiterations; ++it)
-            {
-                if (it >= settings.ioit0)
-                { timeIO_start = MPI_Wtime(); }
-
-                io.write(t, ht, settings, mpiHeatTransferComm);
-
-                if (it >= settings.ioit0)
-                { times[it - settings.ioit0] = MPI_Wtime() - timeIO_start; }
-            }
-            auto GB = static_cast<double>(settings.gndx*settings.gndy*sizeof(double)) / 1.0e9;
-            auto lGB = static_cast<double>(settings.ndx*settings.ndy*sizeof(double)) / 1.0e9;
-            auto avg_time = std::accumulate(times.begin(), times.end(), 0.0) / static_cast<double>(times.size());
-            auto max_time = *std::max_element(times.begin(), times.end());
-            auto min_time = *std::min_element(times.begin(), times.end());
-            std::cout << "Writing global size [GB] " << GB
-                      << " local size [GB] " << lGB
-                      << " perf [GB/s] " << GB/avg_time
-                      << " max perf [GB/s] " << GB / (min_time)
-                      << " min perf [GB/s] " << GB / (max_time)
-                      << std::endl;
+            double mytime = 0.0;
+            auto GB   = static_cast<double>(settings.gndx*settings.gndy*sizeof(double)) / 1.0e9;
+            auto lGB  = static_cast<double>(settings.ndx*settings.ndy*sizeof(double)) / 1.0e9;
+            auto GiB  = static_cast<double>(settings.gndx*settings.gndy*sizeof(double)) / std::pow(1024.0, 3.0);
+            auto lGiB = static_cast<double>(settings.ndx*settings.ndy*sizeof(double)) / std::pow(1024.0, 3.0);
 
             MPI_Barrier(mpiHeatTransferComm);
-        }
+            mytime = MPI_Wtime();
 
-        //- Reading
-        std::vector<double> buffer( settings.ndx*settings.ndy, 0.0 );
-        io.read(0, buffer, settings, mpiHeatTransferComm);
+            io.open_write_close(t, ht, settings, mpiHeatTransferComm);
 
-        for (unsigned int t = 1; t <= settings.steps; ++t)
-        {
             MPI_Barrier(mpiHeatTransferComm);
+            mytime = MPI_Wtime() - mytime;
+
+            double maxtime = 0.0;
+            double mintime = 0.0;
+            double avgtime = 0.0;
+            MPI_Reduce(&mytime, &maxtime, 1, MPI_DOUBLE, MPI_MAX, 0, mpiHeatTransferComm);
+            MPI_Reduce(&mytime, &mintime, 1, MPI_DOUBLE, MPI_MIN, 0, mpiHeatTransferComm);
+            MPI_Reduce(&mytime, &avgtime, 1, MPI_DOUBLE, MPI_SUM, 0, mpiHeatTransferComm);
 
             if (rank == 0)
-                std::cout << "Reading step " << t << ":\n";
-
-            double timeIO_start = 0.0;
-            unsigned int nioit = 0;
-            std::vector<double> times(settings.ioiterations - settings.ioit0, 0.0);
-            for (unsigned int it = 0; it < settings.ioiterations; ++it)
             {
-                if (it >= settings.ioit0)
-                { timeIO_start = MPI_Wtime(); }
-
-                io.read(t, buffer, settings, mpiHeatTransferComm);
-
-                if (it >= settings.ioit0)
-                { times[it - settings.ioit0] = MPI_Wtime() - timeIO_start; }
+                avgtime /= nproc;
+                std::cout << "Writing step " << t 
+                          << " max. time [s] " << maxtime
+                          << " min. time [s] " << mintime
+                          << " avg. time [s] " << avgtime
+                          << " global size [GB] " << GB
+                          << " local size [GB] " << lGB
+                          << " perf [GB/s] " << GB/maxtime
+                          << " global size [GiB] " << GiB
+                          << " local size [GiB] " << lGiB
+                          << " perf [GiB/s] " << GiB/maxtime
+                          << std::endl;
             }
-            auto GB = static_cast<double>(settings.gndx*settings.gndy*sizeof(double)) / 1.0e9;
-            auto lGB = static_cast<double>(settings.ndx*settings.ndy*sizeof(double)) / 1.0e9;
-            auto avg_time = std::accumulate(times.begin(), times.end(), 0.0) / static_cast<double>(times.size());
-            auto max_time = *std::max_element(times.begin(), times.end());
-            auto min_time = *std::min_element(times.begin(), times.end());
-            std::cout << "Reading global size [GB] " << GB
-                      << " local size [GB] " << lGB
-                      << " perf [GB/s] " << GB/avg_time
-                      << " max perf [GB/s] " << GB / (min_time)
-                      << " min perf [GB/s] " << GB / (max_time)
-                      << std::endl;
-
-            MPI_Barrier(mpiHeatTransferComm);
+            io.remove(t);
         }
 
         MPI_Barrier(mpiHeatTransferComm);
+
 
         //double timeEnd = MPI_Wtime();
         //if (rank == 0)

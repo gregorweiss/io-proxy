@@ -17,9 +17,11 @@
 #include <algorithm>    // std::shuffle
 
 #include <iostream>
+#include <cstdio>
 
 MPI_File fh;
 MPI_Datatype filetype;
+MPI_Comm m_comm;
 int mpiio_count;
 int mpiio_rank, mpiio_size;
 
@@ -85,11 +87,23 @@ IO::IO(const Settings &s, MPI_Comm comm)
     MPI_Type_create_resized(indexedtype, lb, extend, &filetype);
 
     MPI_Type_commit(&filetype);
-    
+
+    // Set store the communicator
+    m_comm = comm;
+}
+
+IO::~IO()
+{
+    MPI_File_close(&fh);
+    MPI_Type_free(&filetype);
+}
+
+void IO::open()
+{
     // Open file
     MPI_File_open
     (
-        comm,
+        m_comm,
         m_outputfilename.c_str(),
         MPI_MODE_CREATE | MPI_MODE_RDWR,
         MPI_INFO_NULL,
@@ -108,13 +122,18 @@ IO::IO(const Settings &s, MPI_Comm comm)
     );
 }
 
-IO::~IO()
+void IO::close()
 {
     MPI_File_close(&fh);
-    MPI_Type_free(&filetype);
 }
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
+               MPI_Comm comm)
+{
+    MPI_File_write_all(fh, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
+}
+
+void IO::open_write_close(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
     MPI_File_write_all(fh, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
@@ -124,4 +143,10 @@ void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm)
 {
     MPI_File_read_all(fh, buffer.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
+}
+
+void IO::remove(const int step)
+{
+    if (mpiio_rank == 0)
+        std::remove(m_outputfilename.c_str());
 }

@@ -11,11 +11,13 @@
 #include "IO.h"
 
 #include <string>
+#include <cstdio>
 
 #include <mpi.h>
 
 MPI_File fh;
 MPI_Datatype filetype;
+MPI_Comm m_comm;
 int mpiio_count;
 int mpiio_rank, mpiio_size;
 
@@ -58,11 +60,22 @@ IO::IO(const Settings &s, MPI_Comm comm)
     MPI_Type_create_resized(darraytype, lb, extend, &filetype);
 
     MPI_Type_commit(&filetype);
-   
+
+    // Set store the communicator
+    m_comm = comm;
+}
+
+IO::~IO()
+{
+    MPI_Type_free(&filetype);
+}
+
+void IO::open()
+{
     // Open file
     MPI_File_open
     (
-        comm,
+        m_comm,
         m_outputfilename.c_str(),
         MPI_MODE_CREATE | MPI_MODE_RDWR,
         MPI_INFO_NULL,
@@ -82,10 +95,9 @@ IO::IO(const Settings &s, MPI_Comm comm)
     );
 }
 
-IO::~IO()
+void IO::close()
 {
     MPI_File_close(&fh);
-    MPI_Type_free(&filetype);
 }
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
@@ -94,8 +106,44 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     MPI_File_write_all(fh, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
 }
 
+void IO::open_write_close(int step, const HeatTransfer &ht, const Settings &s,
+               MPI_Comm comm)
+{
+    auto suffix = "step" + std::to_string(step) + ".mpiio_write_all";
+    m_outputfilename = s.outputfile + suffix;
+
+    // Open file and set file view
+    MPI_File fh_onestep;
+    MPI_File_open
+    (
+        comm,
+        m_outputfilename.c_str(),
+        MPI_MODE_CREATE | MPI_MODE_WRONLY,
+        MPI_INFO_NULL,
+        &fh_onestep
+    );
+    MPI_File_set_view
+    (
+        fh_onestep,
+        0,
+        MPI_DOUBLE,
+        filetype,
+        "native",
+        MPI_INFO_NULL
+    );
+    MPI_File_write_all(fh_onestep, ht.data_noghost().data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
+
+    MPI_File_close(&fh_onestep);
+}
+
 void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm)
 {
     MPI_File_read_all(fh, buffer.data(), mpiio_count, MPI_DOUBLE, MPI_STATUS_IGNORE);
+}
+
+void IO::remove(const int step)
+{
+    if (mpiio_rank == 0)
+        std::remove(m_outputfilename.c_str());
 }

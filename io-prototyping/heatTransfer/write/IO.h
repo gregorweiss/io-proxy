@@ -22,10 +22,19 @@ class IO
 public:
     IO(const Settings &s, MPI_Comm comm);
     ~IO();
+
+    void open();
+
     void write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm);
+    void open_write_close(int step, const HeatTransfer &ht, const Settings &s,
+                     MPI_Comm comm);
     void read(const int step, std::vector<double> &buffer, const Settings &s,
               MPI_Comm comm);
+
+    void close();
+
+    void remove(const int step);
 
 private:
     std::string m_outputfilename;

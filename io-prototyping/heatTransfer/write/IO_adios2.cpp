@@ -13,15 +13,19 @@
 #include <string>
 
 #include <iostream> // std::cout
+#include <filesystem>
 
 #include <adios2.h>
 
 adios2::ADIOS ad;
+adios2::IO bpout;
+adios2::IO bpinp;
 adios2::Engine bpWriter;
 adios2::Engine bpReader;
 adios2::Variable<double> varTout;
 adios2::Variable<double> varTinp;
 adios2::Variable<unsigned int> varGndx;
+MPI_Comm m_comm;
 int mpiio_rank;
 
 IO::IO(const Settings &s, MPI_Comm comm)
@@ -32,12 +36,12 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     MPI_Comm_rank(comm, &mpiio_rank);
 
-    adios2::IO bpout = ad.DeclareIO("writer");
+    bpout = ad.DeclareIO("writer");
     if (!bpout.InConfigFile())
     {
         // if not defined by user, we can change the default settings
         // BPFile is the default engine
-        bpout.SetEngine("BPFile");
+        bpout.SetEngine("BP4");
         bpout.SetParameters({{"num_threads", "1"}});
 
         // ISO-POSIX file output is the default transport (called "File")
@@ -48,7 +52,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
         bpout.AddTransport("File", {{"Library", "posix"}});
 #endif
     }
-    adios2::IO bpinp = ad.DeclareIO("reader");
+    bpinp = ad.DeclareIO("reader");
     if (!bpinp.InConfigFile())
     {
         // if not defined by user, we can change the default settings
@@ -78,13 +82,19 @@ IO::IO(const Settings &s, MPI_Comm comm)
     );
     varTinp = bpinp.DefineVariable<double>( "T" );
 
-    //if (bpio.EngineType() == "BP3")
-    //{
-        //varT.SetMemorySelection({{1, 1}, {s.ndx + 2, s.ndy + 2}});
-    //}
+    // Set store the communicator
+    m_comm = comm;
+}
 
-    bpWriter = bpout.Open(m_outputfilename, adios2::Mode::Write, comm);
-    bpReader = bpinp.Open(m_outputfilename, adios2::Mode::Read, comm);
+IO::~IO()
+{
+    close();
+}
+
+void IO::open()
+{
+    bpWriter = bpout.Open(m_outputfilename, adios2::Mode::Write, m_comm);
+    bpReader = bpinp.Open(m_outputfilename, adios2::Mode::Read, m_comm);
 
     // Promise that we are not going to change the variable sizes nor add new
     // variables
@@ -92,10 +102,12 @@ IO::IO(const Settings &s, MPI_Comm comm)
     bpReader.LockReaderSelections();
 }
 
-IO::~IO()
+void IO::close()
 {
-    bpWriter.Close();
-    bpReader.Close();
+    if (bpWriter)
+        bpWriter.Close();
+    if (bpReader)
+        bpReader.Close();
 }
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
@@ -121,6 +133,20 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     }
 }
 
+void IO::open_write_close(int step, const HeatTransfer &ht, const Settings &s,
+               MPI_Comm comm)
+{
+    auto suffix = "step" + std::to_string(step) + ".bp";
+    m_outputfilename = s.outputfile + suffix;
+    bpWriter = bpout.Open(m_outputfilename, adios2::Mode::Write, comm);
+
+    bpWriter.BeginStep();
+    bpWriter.Put<double>(varTout, ht.data_noghost().data());
+    bpWriter.EndStep();
+
+    bpWriter.Close();
+}
+
 void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
                MPI_Comm comm)
 {
@@ -130,4 +156,10 @@ void IO::read(const int step, std::vector<double> &buffer, const Settings &s,
     varTinp.SetBlockSelection( info.BlockID );
     bpReader.Get( varTinp, buffer.data() );
     bpReader.EndStep();
+}
+
+void IO::remove(const int step)
+{
+    //if (mpiio_rank == 0)
+        //std::filesystem::remove_all( m_outputfilename );
 }
