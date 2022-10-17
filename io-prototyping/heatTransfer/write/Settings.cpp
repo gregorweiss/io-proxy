@@ -44,14 +44,15 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
 
     configfile = argv[1];
     outputfile = argv[2];
-    npx = convertToUint("N", argv[3]);
-    npy = convertToUint("M", argv[4]);
-    ndx = convertToUint("nx", argv[5]);
-    ndy = convertToUint("ny", argv[6]);
-    steps = convertToUint("steps", argv[7]);
-    iterations = convertToUint("iterations", argv[8]);
-    ioiterations = convertToUint("ioiterations", argv[9]);
-    ioit0 = convertToUint("ioit0", argv[10]);
+    format = argv[3];
+    npx = convertToUint("N", argv[4]);
+    npy = convertToUint("M", argv[5]);
+    ndx = convertToUint("nx", argv[6]);
+    ndy = convertToUint("ny", argv[7]);
+    steps = convertToUint("steps", argv[8]);
+    iterations = convertToUint("iterations", argv[9]);
+    ioiterations = convertToUint("ioiterations", argv[10]);
+    ioit0 = convertToUint("ioit0", argv[11]);
 
     if (npx * npy != this->nproc)
     {

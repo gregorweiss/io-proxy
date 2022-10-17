@@ -14,82 +14,45 @@
 #include "HeatTransfer.h"
 #include "Settings.h"
 
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <cstdio>
+
+#include <variant>
+#include <optional>
+
 #include <vector>
 #include <mpi.h>
 
+template<typename IOStrategy>
 class IO
 {
-public:
-    IO(const Settings &s, MPI_Comm comm);
-    ~IO();
-
-    void open();
-
-    void write(int step, const HeatTransfer &ht, const Settings &s,
-               MPI_Comm comm);
-    void open_write_close(int step, const HeatTransfer &ht, const Settings &s,
-                     MPI_Comm comm);
-    void read(const int step, std::vector<double> &buffer, const Settings &s,
-              MPI_Comm comm);
-
-    void close();
-
-    void remove(const int step);
-
-private:
-    std::string m_outputfilename;
-
-    // Generate a file name from the outputfile string and the arguments
-    // default is add suffix if not already there
-    // if rank and step is specified, it will create a unique file name for that
-    // rank and step
-    std::string MakeFilename(const std::string &outputfile,
-                             const std::string &suffix, int rank = -1,
-                             int step = -1)
-    {
-        std::string name;
-        const size_t ss = outputfile.size();
-        if (rank == -1 && step == -1)
-        {
-            // add suffix if not present already
-            name = outputfile;
-
-            // if it is a short filename, add directly
-            if (ss <= suffix.size())
-            {
-                name += suffix;
-            }
-
-            // otherwise check whether suffix is already there
-            if ((ss > suffix.size()) &&
-                outputfile.find(suffix) != ss - suffix.size())
-            {
-                name += suffix;
-            }
-        }
-        else
-        {
-            // we need a unique name here
-            name = outputfile;
-            if ((ss > suffix.size()) &&
-                outputfile.find(suffix) == ss - suffix.size())
-            {
-                name = outputfile.substr(0, ss - suffix.size());
-            }
-            if (rank >= 0)
-            {
-                std::string rs = std::to_string(rank);
-                name += "." + rs;
-            }
-            if (step >= 0)
-            {
-                std::string ts = std::to_string(step);
-                name += "." + ts;
-            }
-            name += suffix;
-        }
-        return name;
-    }
+ public:
+  IO() = default;
+  
+  IO( const Settings& settings, MPI_Comm communicator );
+  
+  void chooseFormat( std::string ioFormat );
+  
+  void write( int step,
+              const HeatTransfer& ht,
+              const Settings& s,
+              MPI_Comm comm );
+  
+  void read( const int step,
+             std::vector<double>& buffer,
+             const Settings& s,
+             MPI_Comm comm );
+  
+  void remove( const int step );
+ 
+ private:
+  const Settings _settings;
+  MPI_Comm _communicator;
+  IOStrategy _ioFormat;
 };
+
+#include "IO.cpp"
 
 #endif /* IO_H_ */
