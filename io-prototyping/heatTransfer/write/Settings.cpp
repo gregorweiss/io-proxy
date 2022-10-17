@@ -51,8 +51,6 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
     ndy = convertToUint("ny", argv[7]);
     steps = convertToUint("steps", argv[8]);
     iterations = convertToUint("iterations", argv[9]);
-    ioiterations = convertToUint("ioiterations", argv[10]);
-    ioit0 = convertToUint("ioit0", argv[11]);
 
     if (npx * npy != this->nproc)
     {

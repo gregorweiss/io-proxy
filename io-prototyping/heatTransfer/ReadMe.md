@@ -37,8 +37,6 @@ Writer usage:  heatTransfer  config output  N  M   nx  ny   steps iterations
   ny:     local array size in Y dimension per processor
   steps:  the total number of steps to output
   iterations: one step consist of this many iterations
-  ioiterations: number of IO benchmark iterations per step
-  ioit0: number of IO benchmark iterations to skip
 
 The ADIOS2 executable needs an XML config file to select the Engine used for the output. The engines are: File, BP4 and HDF5, the corresponding XML config files are in the examples/heatTransfer/ directory. The "File" engine will be BP4 or HDF5 depending on the extension of the file name. 
 
