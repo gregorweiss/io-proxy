@@ -1,3 +1,15 @@
+Example compilation on CTE-AMD
+
+''''''''
+module load gcc/10.2.0
+module load openmpi/4.1.3
+module load cmake
+
+CC=mpicc CXX=mpicxx cmake .. -DADIOS2_DIR=_YOURADIOS2PATH_/lib64/cmake/adios2 -Dwith-sionlib=_YOURSIONLIBPATH_
+make
+''''''''
+
+
 examples/heatTransfer
 
 This example solves a 2D Poisson equation for temperature in homogeneous media
