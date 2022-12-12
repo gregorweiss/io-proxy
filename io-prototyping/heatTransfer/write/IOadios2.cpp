@@ -82,7 +82,7 @@ adios2::Variable<double>& IOadios2::defineVariableBySettings( adios2::Variable<d
   retVariable = ioComponent.DefineVariable<double>( identifier,
                                                     { settings.gndx, settings.gndy },   // global dimensions
                                                     { settings.offsx, settings.offsy }, // global offset
-                                                    { settings.ndy, settings.ndx } );   // local size
+                                                    { settings.ndx, settings.ndy } );   // local size
   return retVariable;
 }
 
