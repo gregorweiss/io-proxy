@@ -8,6 +8,8 @@
  *      Author: Gregor Weiss
  */
 
+#ifdef HAVE_SIONLIB
+
 #include "IOsion.h"
 #include "helper.h"
 
@@ -52,3 +54,5 @@ void IOsion::read( const int step,
 void IOsion::remove( const int step ) {
   std::remove( _fileName.c_str());
 }
+
+#endif

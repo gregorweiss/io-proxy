@@ -18,7 +18,7 @@ IOadios2::IOadios2( const Settings& settings, MPI_Comm communicator )
   , _ioOutput{ _adios2Component->DeclareIO( "writer" ) }
   , _ioInput{ _adios2Component->DeclareIO( "reader" ) }
   , _outputVariable{ defineVariableBySettings( _outputVariable, _ioOutput, "T", settings ) }
-  , _inputVariable{ defineVariable( _inputVariable, _ioInput, "T" ) }
+  , _inputVariable{}
   , _communicator{ communicator }
   , _outputfilename{ settings.outputfile }
   , _rank{ getRank( _communicator ) }

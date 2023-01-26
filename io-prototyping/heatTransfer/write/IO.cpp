@@ -13,11 +13,20 @@
 #include "IObinary.h"
 #include "IOmpiLevel0.h"
 #include "IOmpiLevel3.h"
-#include "IOsion.h"
+#ifdef HAVE_SIONLIB
+  #include "IOsion.h"
+#endif
 #include "IOstream.h"
 
-using IOVariant = std::variant<IOadios2, IOascii, IObinary, IOmpiLevel0,
-  IOmpiLevel3, IOsion, IOstream>;
+using IOVariant = std::variant<IOadios2,
+                               IOascii,
+                               IObinary,
+                               IOmpiLevel0,
+                               IOmpiLevel3,
+#ifdef HAVE_SIONLIB
+                               IOsion,
+#endif
+                               IOstream>;
 
 struct Format
 {
@@ -32,8 +41,10 @@ struct Format
     { return IOmpiLevel0{ s, comm }; }
     else if ( ioFormat.compare( "level3" ) == 0 )
     { return IOmpiLevel3{ s, comm }; }
+#ifdef HAVE_SIONLIB
     else if ( ioFormat.compare( "sion" ) == 0 )
     { return IOsion{ s, comm }; }
+#endif
     else if ( ioFormat.compare( "stream" ) == 0 )
     { return IOstream{ s, comm }; }
     
