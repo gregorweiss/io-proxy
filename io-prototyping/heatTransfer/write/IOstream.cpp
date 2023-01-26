@@ -11,6 +11,8 @@
 #include "IOstream.h"
 #include "helper.h"
 
+#include <iostream> //std::cout
+
 #include <stdio.h>
 #include <unistd.h>
 
