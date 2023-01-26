@@ -28,6 +28,8 @@ void IOmpiLevel0::write( int step,
                          const HeatTransfer& ht,
                          const Settings& s,
                          MPI_Comm comm ) {
+  std::vector<double> v = ht.data_noghost();
+
   _outputfilename = MakeFilename( s.outputfile, ".mpiio_write", -1, step );
   
   // Open file and set initial rank-related offset
@@ -40,7 +42,7 @@ void IOmpiLevel0::write( int step,
   MPI_File_seek( _filehandle, offset, MPI_SEEK_SET );
   
   MPI_File_write( _filehandle,
-                  ht.data_noghost().data(),
+                  v.data(),
                   _buffercount,
                   MPI_DOUBLE,
                   MPI_STATUS_IGNORE);

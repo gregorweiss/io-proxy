@@ -77,6 +77,8 @@ void IOmpiLevel3::write( int step,
                          const HeatTransfer& ht,
                          const Settings& s,
                          MPI_Comm comm ) {
+  std::vector<double> v = ht.data_noghost();
+
   _outputfilename = MakeFilename( s.outputfile, ".mpiio_write_all", -1, step );
   
   // Open file and set file view
@@ -93,7 +95,7 @@ void IOmpiLevel3::write( int step,
                      "native",
                      MPI_INFO_NULL);
   MPI_File_write_all( filehandle_onestep,
-                      ht.data_noghost().data(),
+                      v.data(),
                       _buffercount,
                       MPI_DOUBLE,
                       MPI_STATUS_IGNORE);

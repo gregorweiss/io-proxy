@@ -22,10 +22,12 @@ void IObinary::write( int step,
                       const HeatTransfer& ht,
                       const Settings& s,
                       MPI_Comm comm ) {
+  std::vector<double> v = ht.data_noghost();
+
   m_outputfilename = MakeFilename( s.outputfile, ".dat", s.rank, step );
   _filestream.open( m_outputfilename, std::ios_base::out );
   
-  _filestream.write( reinterpret_cast<const char*>(ht.data_noghost().data()),
+  _filestream.write( reinterpret_cast<const char*>(v.data()),
                      static_cast<std::streamsize>(s.ndx * s.ndy * sizeof( double )));
   
   _filestream.close();
@@ -35,10 +37,11 @@ void IObinary::read( const int step,
                      std::vector<double>& buffer,
                      const Settings& s,
                      MPI_Comm comm ) {
-  auto pos = static_cast<std::streamsize>(step * s.ndx * s.ndy * sizeof( double ));
-  _filestream.seekg( pos );
+  m_outputfilename = MakeFilename( s.outputfile, ".dat", s.rank, step );
+  _filestream.open( m_outputfilename, std::ios_base::in );
   _filestream.read( reinterpret_cast<char*>(buffer.data()),
                     static_cast<std::streamsize>(s.ndx * s.ndy * sizeof( double )));
+  _filestream.close();
 }
 
 void IObinary::remove( const int step ) {

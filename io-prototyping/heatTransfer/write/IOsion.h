@@ -58,6 +58,11 @@ class IOsion
               const Settings& s,
               MPI_Comm comm );
   
+  void read( const int step,
+             std::vector<double>& buffer,
+             const Settings& s,
+             MPI_Comm comm );
+
   void remove( const int step );
  
  private:

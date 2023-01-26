@@ -23,16 +23,25 @@ void IOstream::write( int step,
                       const HeatTransfer& ht,
                       const Settings& s,
                       MPI_Comm comm ) {
+  std::vector<double> v = ht.data_noghost();
+
   _filename = MakeFilename( s.outputfile, ".dat", s.rank, step );
   _filestream = fopen( _filename.c_str(), "w" );
   
-  fwrite( reinterpret_cast<const char*>(ht.data_noghost().data()),
+  fwrite( reinterpret_cast<const char*>(v.data()),
           sizeof( double ),
           s.ndx * s.ndy,
           _filestream );
   
   fclose( _filestream );
   fsync( fileno( _filestream ));
+}
+
+void IOstream::read( const int step,
+                   std::vector<double>& ht,
+                   const Settings& s,
+                   MPI_Comm comm ) {
+    std::cout << "IOstream::read not implemented for stream format." << std::endl;
 }
 
 void IOstream::remove( const int step ) {

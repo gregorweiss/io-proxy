@@ -21,17 +21,23 @@ IOadios2::IOadios2( const Settings& settings, MPI_Comm communicator )
   , _inputVariable{ defineVariable( _inputVariable, _ioInput, "T" ) }
   , _communicator{ communicator }
   , _outputfilename{ settings.outputfile }
-  , _rank{ getRank( _communicator ) } {}
+  , _rank{ getRank( _communicator ) }
+{
+  _ioOutput.SetEngine( "BP4" );
+  _ioInput.SetEngine( "BP4" );
+}
 
 void IOadios2::write( int step,
                       const HeatTransfer& ht,
                       const Settings& s,
                       MPI_Comm comm ) {
+  std::vector<double> v = ht.data_noghost();
+
   _outputfilename = MakeFilename( s.outputfile, ".bp", -1, step );
   _engineWriter = _ioOutput.Open( _outputfilename, adios2::Mode::Write, _communicator );
   
   _engineWriter.BeginStep();
-  _engineWriter.Put<double>( _outputVariable, ht.data_noghost().data());
+  _engineWriter.Put<double>( _outputVariable, v.data() );
   _engineWriter.EndStep();
   
   _engineWriter.Close();
@@ -41,12 +47,18 @@ void IOadios2::read( const int step,
                      std::vector<double>& buffer,
                      const Settings& s,
                      MPI_Comm comm ) {
-  _engineReader.BeginStep( adios2::StepMode::Read );
-  auto blocksInfo = _engineReader.BlocksInfo( _inputVariable, _engineReader.CurrentStep());
+  auto inputfilename = MakeFilename( s.outputfile, ".bp", -1, step );
+  _engineReader = _ioInput.Open( inputfilename, adios2::Mode::Read, _communicator );
+  _engineReader.BeginStep();
+
+  _inputVariable = _ioInput.InquireVariable<double>( "T" );
+  auto blocksInfo = _engineReader.BlocksInfo( _inputVariable, _engineReader.CurrentStep() );
   auto& info = blocksInfo[_rank];
   _inputVariable.SetBlockSelection( info.BlockID );
-  _engineReader.Get( _inputVariable, buffer.data());
+  _engineReader.Get( _inputVariable, buffer.data() );
   _engineReader.EndStep();
+
+  _engineReader.Close();
 }
 
 void IOadios2::remove( const int step ) {
