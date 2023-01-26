@@ -21,11 +21,7 @@ IOadios2::IOadios2( const Settings& settings, MPI_Comm communicator )
   , _inputVariable{}
   , _communicator{ communicator }
   , _outputfilename{ settings.outputfile }
-  , _rank{ getRank( _communicator ) }
-{
-  _ioOutput.SetEngine( "BP4" );
-  _ioInput.SetEngine( "BP4" );
-}
+  , _rank{ getRank( _communicator ) } {}
 
 void IOadios2::write( int step,
                       const HeatTransfer& ht,
