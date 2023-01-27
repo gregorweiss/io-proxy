@@ -107,18 +107,24 @@ int main( int argc, char* argv[] ) {
            settings.format.compare( "adios2" ) == 0
            ||
            settings.format.compare( "binary" ) == 0
+           ||
+           settings.format.compare( "level0" ) == 0
+           ||
+           settings.format.compare( "level3" ) == 0
          )
       {
-          IO<IOVariant> istream( settings, MPI_COMM_WORLD);
-          istream.chooseFormat( settings.format );
-          std::vector<double> input_buffer( settings.ndx * settings.ndy, -1.0 );
-          istream.read( t, input_buffer, settings, MPI_COMM_WORLD );
-          bool equal = std::equal( std::begin( input_buffer ),
-                                   std::end( input_buffer ),
-                                   std::begin( ht.data_noghost() ) );
-          if ( !equal ) {
-             std::cout << "WARNING: read data is not equal to written data" << std::endl;
-          }
+        IO<IOVariant> istream( settings, MPI_COMM_WORLD );
+        istream.chooseFormat( settings.format );
+        std::vector<double> input_buffer( settings.ndx * settings.ndy, -1.0 );
+
+        istream.read( t, input_buffer, settings, MPI_COMM_WORLD );
+
+        bool equal = std::equal( std::begin( input_buffer ),
+                                 std::end( input_buffer ),
+                                 std::begin( ht.data_noghost() ) );
+        if ( !equal ) {
+          std::cout << "WARNING: read data is not equal to written data" << std::endl;
+        }
       }
 
       io.remove( t );

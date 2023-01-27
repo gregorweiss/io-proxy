@@ -108,7 +108,28 @@ void IOmpiLevel3::read( const int step,
                         std::vector<double>& buffer,
                         const Settings& s,
                         MPI_Comm comm ) {
-  MPI_File_read_all( _filehandle, buffer.data(), _buffercount, MPI_DOUBLE, MPI_STATUS_IGNORE);
+  _outputfilename = MakeFilename( s.outputfile, ".mpiio_write_all", -1, step );
+
+  // Open file and set file view
+  MPI_File filehandle_onestep;
+  MPI_File_open( comm,
+                 _outputfilename.c_str(),
+                 MPI_MODE_RDONLY,
+                 MPI_INFO_NULL,
+                 &filehandle_onestep );
+  MPI_File_set_view( filehandle_onestep,
+                     0,
+                     MPI_DOUBLE,
+                     _fileview._filetype,
+                     "native",
+                     MPI_INFO_NULL);
+  MPI_File_read_all( filehandle_onestep,
+                     buffer.data(),
+                     _buffercount,
+                     MPI_DOUBLE,
+                     MPI_STATUS_IGNORE);
+
+  MPI_File_close( &filehandle_onestep );
 }
 
 void IOmpiLevel3::remove( const int step ) {
