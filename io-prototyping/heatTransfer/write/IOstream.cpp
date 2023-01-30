@@ -40,10 +40,18 @@ void IOstream::write( int step,
 }
 
 void IOstream::read( const int step,
-                   std::vector<double>& ht,
+                   std::vector<double>& buffer,
                    const Settings& s,
                    MPI_Comm comm ) {
-    std::cout << "IOstream::read not implemented for stream format." << std::endl;
+  _filename = MakeFilename( s.outputfile, ".dat", s.rank, step );
+  _filestream = fopen( _filename.c_str(), "r" );
+
+  fread( reinterpret_cast<char*>(buffer.data()),
+          sizeof( double ),
+          s.ndx * s.ndy,
+          _filestream );
+
+  fclose( _filestream );
 }
 
 void IOstream::remove( const int step ) {

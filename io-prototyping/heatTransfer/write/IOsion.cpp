@@ -45,10 +45,27 @@ void IOsion::write( int step,
 }
 
 void IOsion::read( const int step,
-                   std::vector<double>& ht,
+                   std::vector<double>& buffer,
                    const Settings& s,
                    MPI_Comm comm ) {
-    std::cout << "IOsion::read not implemented for sion format." << std::endl;
+  _fileName = MakeFilename( s.outputfile, ".sion", -1, step );
+  _sionFileId = sion_paropen_mpi( _fileName.c_str(),
+                                  "br",
+                                  &_numFiles,
+                                  _communicator,
+                                  &_communicator,
+                                  &_chunkSize,
+                                  &_fsBlockSize,
+                                  &_rank,
+                                  &_filePtr,
+                                  &_newFileName );
+
+  sion_fread( buffer.data(),
+              sizeof( double ),
+              s.ndx * s.ndy,
+              _sionFileId );
+
+  sion_parclose_mpi( _sionFileId );
 }
 
 void IOsion::remove( const int step ) {
