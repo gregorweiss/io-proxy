@@ -52,7 +52,8 @@ void IOsion::read( const int step,
 }
 
 void IOsion::remove( const int step ) {
-  std::remove( _fileName.c_str());
+  if ( _rank == 0 )
+    std::remove( _fileName.c_str());
 }
 
 #endif
