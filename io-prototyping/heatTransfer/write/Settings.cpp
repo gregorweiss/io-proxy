@@ -62,12 +62,12 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
     // calculate global array size and the local offsets in that global space
     gndx = npx * ndx;
     gndy = npy * ndy;
-    auto global_bytes = gndx * gndy * sizeof(double);
-    auto local_bytes  = ndx  * ndy  * sizeof(double);
-    localGB  = static_cast<double>( local_bytes  / std::pow( 10, 9 ) );
-    globalGB = static_cast<double>( global_bytes / std::pow( 10, 9 ) );
-    localGiB = static_cast<double>( local_bytes  / std::pow( 2, 30 ) );
-    globalGiB  = static_cast<double>( global_bytes / std::pow( 2, 30 ) );
+    double global_bytes = static_cast<double>(gndx) * static_cast<double>(gndy) * sizeof(double);
+    double local_bytes  = static_cast<double>(ndx)  * static_cast<double>(ndy)  * sizeof(double);
+    localGB   = local_bytes  / std::pow( 10.0, 9 );
+    globalGB  = global_bytes / std::pow( 10.0, 9 );
+    localGiB  = local_bytes  / std::pow( 2.0, 30 );
+    globalGiB = global_bytes / std::pow( 2.0, 30 );
     posx = rank % npx;
     posy = rank / npx;
     offsx = posx * ndx;
