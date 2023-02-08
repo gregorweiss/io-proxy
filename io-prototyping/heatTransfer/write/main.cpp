@@ -18,6 +18,7 @@
 #include <string>
 
 #include <cmath>
+#include <string_view>
 
 #include "HeatTransfer.h"
 #include "IO.h"
@@ -36,6 +37,21 @@ void printUsage() {
             << "  iterations: one step consist of this many iterations\n\n";
 }
 
+
+void printPerf( std::string_view identifier, const double timing, const Settings& settings ) {
+  std::cout << identifier
+            << " max. time [s] " << timing
+            << " perf [GB/s] " << settings.globalGB / timing
+            << " perf [GiB/s] " << settings.globalGiB / timing
+            << std::endl;
+}
+
+void printTime( std::string_view identifier, const double timing ) {
+  std::cout << identifier
+            << " time [s] " << timing
+            << std::endl;
+}
+
 int main( int argc, char* argv[] ) {
   
   MPI_Init( &argc, &argv );
@@ -46,97 +62,98 @@ int main( int argc, char* argv[] ) {
   
   try
   {
-    double timeStart = MPI_Wtime();
+    double measTime = 0.0; // individual processor timing
+    double maxTime = 0.0;  // reduced maximum timing
+    double totalTime = MPI_Wtime();
+
     Settings settings( argc, argv, rank, nproc );
     HeatTransfer ht( settings );
     IO<IOVariant> io( settings, MPI_COMM_WORLD);
     io.chooseFormat( settings.format );
-    
+
     ht.init( false );
     ht.heatEdges();
     ht.exchange(MPI_COMM_WORLD);
     
     for ( unsigned int t = 1; t <= settings.steps; ++t )
     {
+      MPI_Barrier(MPI_COMM_WORLD);
+      measTime = MPI_Wtime();
+
       for ( unsigned int iter = 1; iter <= settings.iterations; ++iter )
       {
         ht.iterate();
         ht.exchange(MPI_COMM_WORLD);
         ht.heatEdges();
       }
-      
-      double mytime = 0.0;
-      auto GB = static_cast<double>(settings.gndx * settings.gndy * sizeof( double )) / 1.0e9;
-      auto lGB = static_cast<double>(settings.ndx * settings.ndy * sizeof( double )) / 1.0e9;
-      auto GiB = static_cast<double>(settings.gndx * settings.gndy * sizeof( double )) / std::pow( 1024.0, 3.0 );
-      auto lGiB = static_cast<double>(settings.ndx * settings.ndy * sizeof( double )) / std::pow( 1024.0, 3.0 );
-      
+
       MPI_Barrier(MPI_COMM_WORLD);
-      mytime = MPI_Wtime();
+      measTime = MPI_Wtime() - measTime;
+
+      MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+      if ( rank == 0 ) {
+        printTime( "Calculation step " + std::to_string( t ), maxTime );
+      }
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      measTime = MPI_Wtime();
       
       io.write( t, ht, settings, MPI_COMM_WORLD);
       
       MPI_Barrier(MPI_COMM_WORLD);
-      mytime = MPI_Wtime() - mytime;
-      
-      double maxtime = 0.0;
-      double mintime = 0.0;
-      double avgtime = 0.0;
-      MPI_Reduce( &mytime, &maxtime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-      MPI_Reduce( &mytime, &mintime, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-      MPI_Reduce( &mytime, &avgtime, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-      
-      if ( rank == 0 )
-      {
-        avgtime /= nproc;
-        std::cout << "Writing step " << t
-                  << " max. time [s] " << maxtime
-                  << " min. time [s] " << mintime
-                  << " avg. time [s] " << avgtime
-                  << " global size [GB] " << GB
-                  << " local size [GB] " << lGB
-                  << " perf [GB/s] " << GB / maxtime
-                  << " global size [GiB] " << GiB
-                  << " local size [GiB] " << lGiB
-                  << " perf [GiB/s] " << GiB / maxtime
-                  << std::endl;
+      measTime = MPI_Wtime() - measTime;
+
+      MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+      if ( rank == 0 ) {
+        printPerf( "Writing step " + std::to_string(t), maxTime, settings );
       }
 
-      // Test for content in file
-      if (
-           settings.format.compare( "adios2" ) == 0
-           ||
-           settings.format.compare( "binary" ) == 0
-           ||
-           settings.format.compare( "level0" ) == 0
-           ||
-           settings.format.compare( "level3" ) == 0
-         )
-      {
-        IO<IOVariant> istream( settings, MPI_COMM_WORLD );
-        istream.chooseFormat( settings.format );
-        std::vector<double> input_buffer( settings.ndx * settings.ndy, -1.0 );
+      IO<IOVariant> istream( settings, MPI_COMM_WORLD );
+      istream.chooseFormat( settings.format );
+      std::vector<double> input_buffer( settings.ndx * settings.ndy, -1.0 );
 
-        istream.read( t, input_buffer, settings, MPI_COMM_WORLD );
+      MPI_Barrier(MPI_COMM_WORLD);
+      measTime = MPI_Wtime();
 
-        bool equal = std::equal( std::begin( input_buffer ),
-                                 std::end( input_buffer ),
-                                 std::begin( ht.data_noghost() ) );
-        if ( !equal ) {
-          std::cout << "WARNING: read data is not equal to written data" << std::endl;
-        }
+      istream.read( t, input_buffer, settings, MPI_COMM_WORLD );
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      measTime = MPI_Wtime() - measTime;
+
+      bool equal = std::equal( std::begin( input_buffer ),
+                               std::end( input_buffer ),
+                               std::begin( ht.data_noghost() ) );
+      if ( !equal ) {
+        std::cout << "WARNING: read data is not equal to written data" << std::endl;
+      }
+
+      MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+      if ( rank == 0 ) {
+        printPerf( "Reading step " + std::to_string(t), maxTime, settings );
       }
 
       MPI_Barrier(MPI_COMM_WORLD);
+      measTime = MPI_Wtime();
+
       io.remove( t );
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      measTime = MPI_Wtime() - measTime;
+
+      MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+      if ( rank == 0 ) {
+        printTime( "Removing step " + std::to_string( t ), maxTime );
+      }
     }
     
     MPI_Barrier(MPI_COMM_WORLD);
-    
-    
-    //double timeEnd = MPI_Wtime();
-    //if (rank == 0)
-    //std::cout << "Total runtime = " << timeEnd - timeStart << "s\n";
+    totalTime = MPI_Wtime() - totalTime;
+
+    MPI_Reduce( &totalTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    if (rank == 0) {
+      std::cout << "Total runtime = " << maxTime << "s\n";
+    }
   }
   catch ( std::invalid_argument& e ) // command-line argument errors
   {

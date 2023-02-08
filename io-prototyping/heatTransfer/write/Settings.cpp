@@ -16,6 +16,8 @@
 
 #include <stdexcept>
 
+#include <cmath>
+
 static unsigned int convertToUint(std::string varName, char *arg)
 {
     char *end;
@@ -60,6 +62,12 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
     // calculate global array size and the local offsets in that global space
     gndx = npx * ndx;
     gndy = npy * ndy;
+    auto global_bytes = gndx * gndy * sizeof(double);
+    auto local_bytes  = ndx  * ndy  * sizeof(double);
+    localGB  = static_cast<double>( local_bytes  / std::pow( 10, 9 ) );
+    globalGB = static_cast<double>( global_bytes / std::pow( 10, 9 ) );
+    localGiB = static_cast<double>( local_bytes  / std::pow( 2, 30 ) );
+    globalGiB  = static_cast<double>( global_bytes / std::pow( 2, 30 ) );
     posx = rank % npx;
     posy = rank / npx;
     offsx = posx * ndx;

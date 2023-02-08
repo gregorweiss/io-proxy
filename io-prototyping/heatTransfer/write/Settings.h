@@ -29,6 +29,10 @@ struct Settings
     // calculated values from those arguments and number of processes
     unsigned int gndx; // Global array size in slow dimension
     unsigned int gndy; // Global array size in fast dimension
+    double localGB;    // Local array size in GB
+    double globalGB;   // Global array size in GB
+    double localGiB;    // Local array size in GiB
+    double globalGiB;   // Global array size in GiB
     // X dim positions: rank 0, npx, 2npx... are in the same X position
     // Y dim positions: npx number of consecutive processes belong to one row
     // (npx
