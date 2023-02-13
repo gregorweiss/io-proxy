@@ -35,7 +35,7 @@ struct Format
     { return IOadios2{ s, comm }; }
     else if ( ioFormat.compare( "ascii" ) == 0 )
     { return IOascii{ s, comm }; }
-    else if ( ioFormat.compare( "binary" ) == 0 )
+    else if ( ioFormat.find( "binary" ) != std::string::npos )
     { return IObinary{ s, comm }; }
     else if ( ioFormat.compare( "level0" ) == 0 )
     { return IOmpiLevel0{ s, comm }; }
@@ -79,7 +79,7 @@ void IO<IOStrategy>::write( int step,
 
 template<typename IOStrategy>
 void IO<IOStrategy>::read( const int step,
-                           std::vector<double>& buffer,
+                           std::vector<std::vector<double> >& buffer,
                            const Settings& s,
                            MPI_Comm comm ) {
   std::visit(

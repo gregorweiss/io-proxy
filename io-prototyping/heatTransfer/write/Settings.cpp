@@ -64,10 +64,10 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
     gndy = npy * ndy;
     double global_bytes = static_cast<double>(gndx) * static_cast<double>(gndy) * sizeof(double);
     double local_bytes  = static_cast<double>(ndx)  * static_cast<double>(ndy)  * sizeof(double);
-    localGB   = local_bytes  / std::pow( 10.0, 9 );
-    globalGB  = global_bytes / std::pow( 10.0, 9 );
-    localGiB  = local_bytes  / std::pow( 2.0, 30 );
-    globalGiB = global_bytes / std::pow( 2.0, 30 );
+    localGB   = local_bytes  / std::pow( 10.0, 9 ) * static_cast<double>( iterations );
+    globalGB  = global_bytes / std::pow( 10.0, 9 ) * static_cast<double>( iterations );
+    localGiB  = local_bytes  / std::pow( 2.0, 30 ) * static_cast<double>( iterations );
+    globalGiB = global_bytes / std::pow( 2.0, 30 ) * static_cast<double>( iterations );
     posx = rank % npx;
     posy = rank / npx;
     offsx = posx * ndx;

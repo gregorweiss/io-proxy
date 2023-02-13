@@ -41,7 +41,7 @@ class IO
               MPI_Comm comm );
   
   void read( const int step,
-             std::vector<double>& buffer,
+             std::vector<std::vector<double> >& buffer,
              const Settings& s,
              MPI_Comm comm );
   

@@ -25,31 +25,35 @@ void IOstream::write( int step,
                       const HeatTransfer& ht,
                       const Settings& s,
                       MPI_Comm comm ) {
-  std::vector<double> v = ht.data_noghost();
-
   _filename = MakeFilename( s.outputfile, ".dat", s.rank, step );
   _filestream = fopen( _filename.c_str(), "w" );
   
-  fwrite( reinterpret_cast<const char*>(v.data()),
-          sizeof( double ),
-          s.ndx * s.ndy,
-          _filestream );
+  auto write_size = s.ndx * s.ndy;
+  for ( const auto& iteration : ht.m_TIterations ) {
+    fwrite( reinterpret_cast<const char*>(iteration.data()),
+            sizeof( double ),
+            write_size,
+            _filestream );
+  }
   
   fclose( _filestream );
   fsync( fileno( _filestream ));
 }
 
 void IOstream::read( const int step,
-                   std::vector<double>& buffer,
-                   const Settings& s,
-                   MPI_Comm comm ) {
+                     std::vector<std::vector<double> >& buffer,
+                     const Settings& s,
+                     MPI_Comm comm ) {
   _filename = MakeFilename( s.outputfile, ".dat", s.rank, step );
   _filestream = fopen( _filename.c_str(), "r" );
 
-  fread( reinterpret_cast<char*>(buffer.data()),
-          sizeof( double ),
-          s.ndx * s.ndy,
-          _filestream );
+  auto read_size = s.ndx * s.ndy;
+  for ( auto& iteration : buffer ) {
+    fread( reinterpret_cast<char*>(iteration.data()),
+           sizeof( double ),
+           read_size,
+           _filestream );
+  }
 
   fclose( _filestream );
 }

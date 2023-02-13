@@ -14,6 +14,7 @@
 #include "helper.h"
 
 #include <cstdio>
+#include <iostream> // cout
 
 #include <mpi.h>
 
@@ -23,7 +24,10 @@ FileView::FileView( const Settings& settings, MPI_Comm communicator )
   , _gsizes{ static_cast<const int>(settings.gndx), static_cast<const int>(settings.gndy) }
   , _globsizes{ static_cast<int>(settings.gndx * settings.gndy) }
   , _rank{ getRank( _communicator ) }
-  , _nprocs{ getNProcs( _communicator ) } {
+  , _nprocs{ getNProcs( _communicator ) }
+  , _disp{ sizeof( double ) } {
+  _disp *= settings.gndx;
+  _disp *= settings.gndy;
   initialize();
 }
 
@@ -33,7 +37,8 @@ FileView::FileView( FileView const& other )
   , _gsizes{ other._gsizes[0], other._gsizes[1] }
   , _globsizes{ other._globsizes }
   , _rank{ other._rank }
-  , _nprocs{ other._nprocs } {
+  , _nprocs{ other._nprocs }
+  , _disp{ other._disp } {
   initialize();
 }
 
@@ -77,8 +82,6 @@ void IOmpiLevel3::write( int step,
                          const HeatTransfer& ht,
                          const Settings& s,
                          MPI_Comm comm ) {
-  std::vector<double> v = ht.data_noghost();
-
   _outputfilename = MakeFilename( s.outputfile, ".mpiio_write_all", -1, step );
   
   // Open file and set file view
@@ -88,24 +91,29 @@ void IOmpiLevel3::write( int step,
                  MPI_MODE_CREATE | MPI_MODE_WRONLY,
                  MPI_INFO_NULL,
                  &filehandle_onestep );
-  MPI_File_set_view( filehandle_onestep,
-                     0,
-                     MPI_DOUBLE,
-                     _fileview._filetype,
-                     "native",
-                     MPI_INFO_NULL);
-  MPI_File_write_all( filehandle_onestep,
-                      v.data(),
-                      _buffercount,
-                      MPI_DOUBLE,
-                      MPI_STATUS_IGNORE);
+
+  MPI_Offset iter = 0;
+  for ( const auto& iteration : ht.m_TIterations ) {
+    MPI_Offset displacement = _fileview._disp * iter;
+    MPI_File_set_view( filehandle_onestep,
+                       displacement,
+                       MPI_DOUBLE,
+                       _fileview._filetype,
+                       "native",
+                       MPI_INFO_NULL );
+    MPI_File_write_all( filehandle_onestep,
+                        iteration.data(),
+                        _buffercount,
+                        MPI_DOUBLE,
+                        MPI_STATUS_IGNORE );
+    ++iter;
+  }
   
   MPI_File_close( &filehandle_onestep );
 }
 
-
 void IOmpiLevel3::read( const int step,
-                        std::vector<double>& buffer,
+                        std::vector<std::vector<double> >& buffer,
                         const Settings& s,
                         MPI_Comm comm ) {
   _outputfilename = MakeFilename( s.outputfile, ".mpiio_write_all", -1, step );
@@ -117,17 +125,23 @@ void IOmpiLevel3::read( const int step,
                  MPI_MODE_RDONLY,
                  MPI_INFO_NULL,
                  &filehandle_onestep );
-  MPI_File_set_view( filehandle_onestep,
-                     0,
-                     MPI_DOUBLE,
-                     _fileview._filetype,
-                     "native",
-                     MPI_INFO_NULL);
-  MPI_File_read_all( filehandle_onestep,
-                     buffer.data(),
-                     _buffercount,
-                     MPI_DOUBLE,
-                     MPI_STATUS_IGNORE);
+
+  MPI_Offset iter = 0;
+  for ( auto& iteration : buffer ) {
+    MPI_Offset displacement = _fileview._disp * iter;
+    MPI_File_set_view( filehandle_onestep,
+                       displacement,
+                       MPI_DOUBLE,
+                       _fileview._filetype,
+                       "native",
+                       MPI_INFO_NULL );
+    MPI_File_read_all( filehandle_onestep,
+                       iteration.data(),
+                       _buffercount,
+                       MPI_DOUBLE,
+                       MPI_STATUS_IGNORE );
+    ++iter;
+  }
 
   MPI_File_close( &filehandle_onestep );
 }

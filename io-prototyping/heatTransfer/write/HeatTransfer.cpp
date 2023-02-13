@@ -227,3 +227,12 @@ std::vector<double> HeatTransfer::data_noghost() const
     }
     return d;
 }
+
+/* Copies the iteration into a separate public vector
+ * of vectors that is publicly available.
+ */
+void HeatTransfer::store()
+{
+    auto TIteration = data_noghost();
+    m_TIterations.push_back( TIteration );
+}

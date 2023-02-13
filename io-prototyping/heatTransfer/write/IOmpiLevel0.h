@@ -54,7 +54,7 @@ class IOmpiLevel0
               MPI_Comm comm );
   
   void read( const int step,
-             std::vector<double>& buffer,
+             std::vector<std::vector<double> >& buffer,
              const Settings& s,
              MPI_Comm comm );
   
@@ -64,6 +64,7 @@ class IOmpiLevel0
   MPI_File _filehandle{};
   MPI_Comm _communicator{};
   std::string _outputfilename{};
+  MPI_Offset _disp{};
   int _buffercount{};
   int _rank{};
   int _nprocs{};

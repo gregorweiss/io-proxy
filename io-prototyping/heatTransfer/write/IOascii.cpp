@@ -62,7 +62,7 @@ void IOascii::write( int step,
 }
 
 void IOascii::read( const int step,
-                    std::vector<double>& ht,
+                    std::vector<std::vector<double> >& ht,
                     const Settings& s,
                     MPI_Comm comm ) { std::cout << "IOascii::read not implemented for ascii format." << std::endl; }
 

@@ -37,9 +37,12 @@ public:
     // return (1D) pointer to current T data without ghost cells, ndx*ndy
     // elements
     std::vector<double> data_noghost() const;
+    void store();
 
     void printT(std::string message,
                 MPI_Comm comm) const; // debug: print local TCurrent on stdout
+
+    std::vector<std::vector<double> > m_TIterations{};
 
 private:
     const Settings &m_s;

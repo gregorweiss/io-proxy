@@ -14,6 +14,10 @@
 #include <string>
 #include <mpi.h>
 
+std::string MakeProcFolders( int rank );
+
+void RemoveProcFolders( int rank );
+
 std::string MakeFilename( const std::string &outputfile,
                           const std::string &suffix,
                           int rank = -1,

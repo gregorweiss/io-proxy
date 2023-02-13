@@ -59,7 +59,7 @@ class IOsion
               MPI_Comm comm );
   
   void read( const int step,
-             std::vector<double>& buffer,
+             std::vetor<std::vector<double> >& buffer,
              const Settings& s,
              MPI_Comm comm );
 

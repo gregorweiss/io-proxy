@@ -20,6 +20,7 @@
 IOmpiLevel0::IOmpiLevel0( const Settings& s, MPI_Comm comm )
   : _communicator{ comm }
   , _outputfilename{ MakeFilename( s.outputfile, ".mpiio_write" ) }
+  , _disp{ static_cast<MPI_Offset>( sizeof(double) * s.gndx * s.gndy ) }
   , _buffercount{ static_cast<int>( s.ndx * s.ndy ) }
   , _rank{ getRank( comm ) }
   , _nprocs{ getNProcs( comm ) } {}
@@ -28,8 +29,6 @@ void IOmpiLevel0::write( int step,
                          const HeatTransfer& ht,
                          const Settings& s,
                          MPI_Comm comm ) {
-  std::vector<double> v = ht.data_noghost();
-
   _outputfilename = MakeFilename( s.outputfile, ".mpiio_write", -1, step );
   
   // Open file and set initial rank-related offset
@@ -38,20 +37,23 @@ void IOmpiLevel0::write( int step,
                  MPI_MODE_CREATE | MPI_MODE_WRONLY,
                  MPI_INFO_NULL,
                  &_filehandle );
-  MPI_Offset offset = _rank * _buffercount * sizeof( double );
-  MPI_File_seek( _filehandle, offset, MPI_SEEK_SET );
-  
-  MPI_File_write( _filehandle,
-                  v.data(),
-                  _buffercount,
-                  MPI_DOUBLE,
-                  MPI_STATUS_IGNORE);
+  MPI_Offset iter = 0;
+  for ( const auto& iteration : ht.m_TIterations ) {
+    MPI_Offset offset = _rank * _buffercount * sizeof( double ) + _disp * iter;
+    MPI_File_seek( _filehandle, offset, MPI_SEEK_SET );
+    MPI_File_write( _filehandle,
+                    iteration.data(),
+                    _buffercount,
+                    MPI_DOUBLE,
+                    MPI_STATUS_IGNORE);
+    ++iter;
+  }
   
   MPI_File_close( &_filehandle );
 }
 
 void IOmpiLevel0::read( const int step,
-                        std::vector<double>& buffer,
+                        std::vector<std::vector<double> >& buffer,
                         const Settings& s,
                         MPI_Comm comm ) {
   _outputfilename = MakeFilename( s.outputfile, ".mpiio_write", -1, step );
@@ -62,10 +64,14 @@ void IOmpiLevel0::read( const int step,
                  MPI_MODE_RDONLY,
                  MPI_INFO_NULL,
                  &_filehandle );
-  MPI_Offset offset = _rank * _buffercount * sizeof( double );
-  MPI_File_seek( _filehandle, offset, MPI_SEEK_SET );
-  
-  MPI_File_read( _filehandle, buffer.data(), _buffercount, MPI_DOUBLE, MPI_STATUS_IGNORE);
+
+  MPI_Offset iter = 0;
+  for ( auto& iteration : buffer ) {
+    MPI_Offset offset = _rank * _buffercount * sizeof( double ) + _disp * iter;
+    MPI_File_seek( _filehandle, offset, MPI_SEEK_SET );
+    MPI_File_read( _filehandle, iteration.data(), _buffercount, MPI_DOUBLE, MPI_STATUS_IGNORE);
+    ++iter;
+  }
   
   MPI_File_close( &_filehandle );
 }

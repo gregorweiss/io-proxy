@@ -45,7 +45,7 @@ void IOsion::write( int step,
 }
 
 void IOsion::read( const int step,
-                   std::vector<double>& buffer,
+                   std::vector<std::vector<double> >& buffer,
                    const Settings& s,
                    MPI_Comm comm ) {
   _fileName = MakeFilename( s.outputfile, ".sion", -1, step );

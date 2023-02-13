@@ -55,9 +55,11 @@ class FileView
     swap( _globsizes, other._globsizes );
     swap( _rank, other._rank );
     swap( _nprocs, other._nprocs );
+    swap( _disp, other._disp );
     initialize();
   }
   
+  MPI_Offset _disp{};
   MPI_Datatype _filetype;
 };
 
@@ -101,10 +103,10 @@ class IOmpiLevel3
               MPI_Comm comm );
   
   void read( const int step,
-             std::vector<double>& buffer,
+             std::vector<std::vector<double> >& buffer,
              const Settings& s,
              MPI_Comm comm );
-  
+
   void remove( const int step );
  
  private:

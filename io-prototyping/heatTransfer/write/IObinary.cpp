@@ -11,39 +11,54 @@
 #include "IObinary.h"
 #include "helper.h"
 
-#include <iostream>
 #include <cstdio>
 
+#include <filesystem>
+
 IObinary::IObinary( const Settings& s, MPI_Comm comm ) {
-  m_outputfilename = MakeFilename( s.outputfile, ".dat", s.rank );
+  if ( s.format.find("_with_folders") != std::string::npos ) {
+    auto rank = getRank( MPI_COMM_WORLD );
+    std::string foldername = MakeProcFolders( rank );
+    m_outputfilename = foldername + s.outputfile;
+  } else {
+    m_outputfilename = s.outputfile;
+  }
 }
 
 void IObinary::write( int step,
                       const HeatTransfer& ht,
                       const Settings& s,
                       MPI_Comm comm ) {
-  std::vector<double> v = ht.data_noghost();
-
-  m_outputfilename = MakeFilename( s.outputfile, ".dat", s.rank, step );
-  _filestream.open( m_outputfilename, std::ios_base::out );
+  auto filename = MakeFilename( m_outputfilename, ".dat", s.rank, step );
+  _filestream.open( filename, std::ios_base::out );
   
-  _filestream.write( reinterpret_cast<const char*>(v.data()),
-                     static_cast<std::streamsize>(s.ndx * s.ndy * sizeof( double )));
+  auto write_size = static_cast<std::streamsize>( s.ndx * s.ndy * sizeof( double ) );
+  for ( const auto& iteration : ht.m_TIterations ) {
+    _filestream.write( reinterpret_cast<const char*>(iteration.data()),
+                       write_size );
+  }
   
   _filestream.close();
 }
 
 void IObinary::read( const int step,
-                     std::vector<double>& buffer,
+                     std::vector<std::vector<double> >& buffer,
                      const Settings& s,
                      MPI_Comm comm ) {
-  m_outputfilename = MakeFilename( s.outputfile, ".dat", s.rank, step );
-  _filestream.open( m_outputfilename, std::ios_base::in );
-  _filestream.read( reinterpret_cast<char*>(buffer.data()),
-                    static_cast<std::streamsize>(s.ndx * s.ndy * sizeof( double )));
+  auto filename = MakeFilename( m_outputfilename, ".dat", s.rank, step );
+  _filestream.open( filename, std::ios_base::in );
+
+  auto read_size = static_cast<std::streamsize>( s.ndx * s.ndy * sizeof( double ) );
+  for ( auto& iteration : buffer ) {
+    _filestream.read( reinterpret_cast<char*>( iteration.data() ),
+                      read_size );
+  }
+
   _filestream.close();
 }
 
 void IObinary::remove( const int step ) {
-  std::remove( m_outputfilename.c_str());
+  auto rank = getRank( MPI_COMM_WORLD );
+  auto filename = MakeFilename( m_outputfilename, ".dat", rank, step );
+  std::filesystem::remove( filename.c_str() );
 }

@@ -11,6 +11,23 @@
 
 #include "helper.h"
 
+#include <filesystem>
+#include <iostream>
+
+// Generate a folder per rank
+std::string MakeProcFolders( int rank ) {
+    std::filesystem::path path_name = "processor" + std::to_string(rank) + "/";
+    std::filesystem::create_directory( path_name );
+    return path_name.string();
+}
+
+// Remove processor folders
+void RemoveProcFolders( int rank ) {
+    std::filesystem::path path_name = "processor" + std::to_string(rank) + "/";
+    std::filesystem::exists( path_name );
+    std::filesystem::remove( path_name );
+}
+
 // Generate a file name from the outputfile string and the arguments
 // default is add suffix if not already there
 // if rank and step is specified, it will create a unique file name for that
