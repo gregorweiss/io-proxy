@@ -36,10 +36,12 @@ void IOsion::write( int step,
   _sionFileId = sion_paropen_mpi( _fileName.c_str(), "bw", &_numFiles, _communicator, &_communicator,
                                    &_chunkSize, &_fsBlockSize, &_rank, &_filePtr, &_newFileName );
   
-  sion_fwrite( v.data(),
-               sizeof( double ),
-               s.ndx * s.ndy,
-               _sionFileId );
+  for ( const auto& iteration : ht.m_TIterations ) {
+    sion_fwrite( iteration.data(),
+                 sizeof( double ),
+                 s.ndx * s.ndy,
+                 _sionFileId );
+  }
   
   sion_parclose_mpi( _sionFileId );
 }
@@ -60,10 +62,12 @@ void IOsion::read( const int step,
                                   &_filePtr,
                                   &_newFileName );
 
-  sion_fread( buffer.data(),
-              sizeof( double ),
-              s.ndx * s.ndy,
-              _sionFileId );
+  for ( auto& iteration : buffer ) {
+    sion_fread( iteration.data(),
+                sizeof( double ),
+                s.ndx * s.ndy,
+                _sionFileId );
+  }
 
   sion_parclose_mpi( _sionFileId );
 }

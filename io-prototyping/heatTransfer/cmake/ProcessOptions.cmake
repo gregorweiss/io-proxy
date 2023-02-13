@@ -12,9 +12,9 @@ function(PROCESS_WITH_SIONLIB)
         find_package(SIONlib)
         include_directories(${SIONLIB_INCLUDE})
 
-        # is linked in nestkernel/CMakeLists.txt
         if (SIONLIB_FOUND)
             set(HAVE_SIONLIB ON CACHE INTERNAL "sionlib")
+            add_definitions( -DHAVE_SIONLIB )
         endif ()
     endif ()
 endfunction()
