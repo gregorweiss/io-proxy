@@ -92,9 +92,8 @@ void IOmpiLevel3::write( int step,
                  MPI_INFO_NULL,
                  &filehandle_onestep );
 
-  MPI_Offset iter = 0;
+  MPI_Offset displacement = 0;
   for ( const auto& iteration : ht.m_TIterations ) {
-    MPI_Offset displacement = _fileview._disp * iter;
     MPI_File_set_view( filehandle_onestep,
                        displacement,
                        MPI_DOUBLE,
@@ -106,7 +105,7 @@ void IOmpiLevel3::write( int step,
                         _buffercount,
                         MPI_DOUBLE,
                         MPI_STATUS_IGNORE );
-    ++iter;
+    displacement += _fileview._disp;
   }
   
   MPI_File_close( &filehandle_onestep );
@@ -126,9 +125,8 @@ void IOmpiLevel3::read( const int step,
                  MPI_INFO_NULL,
                  &filehandle_onestep );
 
-  MPI_Offset iter = 0;
+  MPI_Offset displacement = 0;
   for ( auto& iteration : buffer ) {
-    MPI_Offset displacement = _fileview._disp * iter;
     MPI_File_set_view( filehandle_onestep,
                        displacement,
                        MPI_DOUBLE,
@@ -140,7 +138,7 @@ void IOmpiLevel3::read( const int step,
                        _buffercount,
                        MPI_DOUBLE,
                        MPI_STATUS_IGNORE );
-    ++iter;
+    displacement += _fileview._disp;
   }
 
   MPI_File_close( &filehandle_onestep );

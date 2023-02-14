@@ -37,16 +37,16 @@ void IOmpiLevel0::write( int step,
                  MPI_MODE_CREATE | MPI_MODE_WRONLY,
                  MPI_INFO_NULL,
                  &_filehandle );
-  MPI_Offset iter = 0;
+
+  MPI_Offset offset = _rank * _buffercount * sizeof( double );
   for ( const auto& iteration : ht.m_TIterations ) {
-    MPI_Offset offset = _rank * _buffercount * sizeof( double ) + _disp * iter;
     MPI_File_seek( _filehandle, offset, MPI_SEEK_SET );
     MPI_File_write( _filehandle,
                     iteration.data(),
                     _buffercount,
                     MPI_DOUBLE,
                     MPI_STATUS_IGNORE);
-    ++iter;
+    offset += _disp;
   }
   
   MPI_File_close( &_filehandle );
@@ -65,12 +65,15 @@ void IOmpiLevel0::read( const int step,
                  MPI_INFO_NULL,
                  &_filehandle );
 
-  MPI_Offset iter = 0;
+  MPI_Offset offset = _rank * _buffercount * sizeof( double );
   for ( auto& iteration : buffer ) {
-    MPI_Offset offset = _rank * _buffercount * sizeof( double ) + _disp * iter;
     MPI_File_seek( _filehandle, offset, MPI_SEEK_SET );
-    MPI_File_read( _filehandle, iteration.data(), _buffercount, MPI_DOUBLE, MPI_STATUS_IGNORE);
-    ++iter;
+    MPI_File_read( _filehandle,
+                   iteration.data(),
+                   _buffercount,
+                   MPI_DOUBLE,
+                   MPI_STATUS_IGNORE);
+    offset += _disp;
   }
   
   MPI_File_close( &_filehandle );
