@@ -12,6 +12,7 @@
 #include "IOascii.h"
 #include "IObinary.h"
 #include "IOmpiLevel0.h"
+#include "IOmpiLevel1.h"
 #include "IOmpiLevel3.h"
 #ifdef HAVE_SIONLIB
   #include "IOsion.h"
@@ -22,6 +23,7 @@ using IOVariant = std::variant<IOadios2,
                                IOascii,
                                IObinary,
                                IOmpiLevel0,
+                               IOmpiLevel1,
                                IOmpiLevel3,
 #ifdef HAVE_SIONLIB
                                IOsion,
@@ -39,6 +41,8 @@ struct Format
     { return IObinary{ s, comm }; }
     else if ( ioFormat.compare( "level0" ) == 0 )
     { return IOmpiLevel0{ s, comm }; }
+    else if ( ioFormat.compare( "level1" ) == 0 )
+    { return IOmpiLevel1{ s, comm }; }
     else if ( ioFormat.compare( "level3" ) == 0 )
     { return IOmpiLevel3{ s, comm }; }
 #ifdef HAVE_SIONLIB

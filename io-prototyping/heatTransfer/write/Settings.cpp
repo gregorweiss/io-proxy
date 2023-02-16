@@ -54,6 +54,12 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
     steps = convertToUint("steps", argv[8]);
     iterations = convertToUint("iterations", argv[9]);
 
+    if ( argc == 11 ) {
+        if ( std::string(argv[10]) == std::string("read") ) {
+            read = true;
+        }
+    }
+
     if (npx * npy != this->nproc)
     {
         throw std::invalid_argument("N*M must equal the number of processes");

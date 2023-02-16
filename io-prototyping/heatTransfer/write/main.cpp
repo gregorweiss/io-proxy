@@ -130,24 +130,26 @@ int main( int argc, char* argv[] ) {
         printPerf( "Writing step " + std::to_string(t), maxTime, settings );
       }
 
-      IO<IOVariant> istream( settings, MPI_COMM_WORLD );
-      istream.chooseFormat( settings.format );
-      std::vector<std::vector<double> > input( settings.iterations,
-                                               std::vector<double>( settings.ndx * settings.ndy, -1.0 ) );
+      if ( settings.read ) {
+        IO<IOVariant> istream( settings, MPI_COMM_WORLD );
+        istream.chooseFormat( settings.format );
+        std::vector<std::vector<double> > input( settings.iterations,
+                                                 std::vector<double>( settings.ndx * settings.ndy, -1.0 ) );
 
-      MPI_Barrier(MPI_COMM_WORLD);
-      measTime = MPI_Wtime();
+        MPI_Barrier(MPI_COMM_WORLD);
+        measTime = MPI_Wtime();
 
-      istream.read( t, input, settings, MPI_COMM_WORLD );
+        istream.read( t, input, settings, MPI_COMM_WORLD );
 
-      MPI_Barrier(MPI_COMM_WORLD);
-      measTime = MPI_Wtime() - measTime;
+        MPI_Barrier(MPI_COMM_WORLD);
+        measTime = MPI_Wtime() - measTime;
 
-      checkEquality( input, ht.m_TIterations );
+        checkEquality( input, ht.m_TIterations );
 
-      MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-      if ( rank == 0 ) {
-        printPerf( "Reading step " + std::to_string(t), maxTime, settings );
+        MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+        if ( rank == 0 ) {
+          printPerf( "Reading step " + std::to_string(t), maxTime, settings );
+        }
       }
 
       MPI_Barrier(MPI_COMM_WORLD);
