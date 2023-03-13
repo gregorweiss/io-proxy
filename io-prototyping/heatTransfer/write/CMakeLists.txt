@@ -7,6 +7,7 @@ add_executable(heatTransfer_write
         main.cpp
         HeatTransfer.cpp
         Settings.cpp
+        FileView.cpp
         helper.cpp
         IOascii.cpp
         IOadios2.cpp

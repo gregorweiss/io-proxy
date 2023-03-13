@@ -43,7 +43,7 @@ struct Format
     { return IOmpiLevel0{ s, comm }; }
     else if ( ioFormat.compare( "level1" ) == 0 )
     { return IOmpiLevel1{ s, comm }; }
-    else if ( ioFormat.compare( "level3" ) == 0 )
+    else if ( ioFormat.find( "level3" ) != std::string::npos )
     { return IOmpiLevel3{ s, comm }; }
 #ifdef HAVE_SIONLIB
     else if ( ioFormat.compare( "sion" ) == 0 )

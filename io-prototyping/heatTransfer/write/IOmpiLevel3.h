@@ -13,57 +13,10 @@
 
 #include "HeatTransfer.h"
 #include "Settings.h"
+#include "FileView.h"
 
 #include <vector>
 #include <mpi.h>
-
-class FileView
-{
-  MPI_Datatype _darraytype{};
-  MPI_Comm _communicator{};
-  int _distribs[2]{ MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_BLOCK };
-  int _dargs[2]{ MPI_DISTRIBUTE_DFLT_DARG, MPI_DISTRIBUTE_DFLT_DARG };
-  int _psizes[2]{};
-  int _gsizes[2]{};
-  int _globsizes{};
-  int _rank{};
-  int _nprocs{};
-  
-  void initialize();
- 
- public:
-  
-  FileView( const Settings& settings, MPI_Comm communicator );
-  
-  ~FileView();
-  
-  FileView( FileView const& other );
-  
-  FileView& operator=( FileView const& other ) noexcept {
-    FileView tmp{ other };
-    swap( tmp );
-    return *this;
-  };
-  
-  void swap( FileView& other ) noexcept {
-    using std::swap;
-    swap( _communicator, other._communicator );
-    swap( _distribs, other._distribs );
-    swap( _dargs, other._dargs );
-    swap( _psizes, other._psizes );
-    swap( _gsizes, other._gsizes );
-    swap( _globsizes, other._globsizes );
-    swap( _rank, other._rank );
-    swap( _nprocs, other._nprocs );
-    swap( _disp, other._disp );
-    initialize();
-  }
-  
-  MPI_Offset _disp{};
-  MPI_Datatype _filetype;
-};
-
-void swap( FileView& a, FileView& b ) noexcept;
 
 class IOmpiLevel3
 {

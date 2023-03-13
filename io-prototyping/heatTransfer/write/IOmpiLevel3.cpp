@@ -18,60 +18,32 @@
 
 #include <mpi.h>
 
-FileView::FileView( const Settings& settings, MPI_Comm communicator )
-  : _communicator{ communicator }
-  , _psizes{ static_cast<int>(settings.npx), static_cast<int>(settings.npy) }
-  , _gsizes{ static_cast<const int>(settings.gndx), static_cast<const int>(settings.gndy) }
-  , _globsizes{ static_cast<int>(settings.gndx * settings.gndy) }
-  , _rank{ getRank( _communicator ) }
-  , _nprocs{ getNProcs( _communicator ) }
-  , _disp{ sizeof( double ) } {
-  _disp *= settings.gndx;
-  _disp *= settings.gndy;
-  initialize();
-}
-
-FileView::FileView( FileView const& other )
-  : _communicator{ other._communicator }
-  , _psizes{ other._psizes[0], other._psizes[1] }
-  , _gsizes{ other._gsizes[0], other._gsizes[1] }
-  , _globsizes{ other._globsizes }
-  , _rank{ other._rank }
-  , _nprocs{ other._nprocs }
-  , _disp{ other._disp } {
-  initialize();
-}
-
-FileView::~FileView() noexcept {
-  if ( _filetype )
-    MPI_Type_free( &_filetype );
-  if ( _darraytype )
-    MPI_Type_free( &_darraytype );
-}
-
-void FileView::initialize() {
-  MPI_Type_create_darray( _nprocs,
-                          _rank,
-                          2,
-                          _gsizes,
-                          _distribs,
-                          _dargs,
-                          _psizes,
-                          MPI_ORDER_C,
-                          MPI_DOUBLE,
-                          &_darraytype );
-  MPI_Aint lowerbound{ 0 };
-  MPI_Aint extend = static_cast<MPI_Aint>( _globsizes * sizeof( double ));
-  MPI_Type_create_resized( _darraytype, lowerbound, extend, &_filetype );
-  MPI_Type_commit( &_filetype );
-}
-
-void swap( FileView& a, FileView& b ) noexcept {
-  a.swap( b );
+auto choose_layout( std::string_view format ) {
+  std::function<void(const Settings&, MPI_Datatype&)> gen_filetype{ nullptr };
+  if ( format.find("1Dsubarray") != std::string::npos ) {
+    gen_filetype = subarray1D;
+  } else if ( format.find("2Dsubarray") != std::string::npos ) {
+    if ( format.find("contiguous") != std::string::npos ) {
+      gen_filetype = subarray2D_contiguous;
+    } else {
+      gen_filetype = subarray2D;
+    }
+  } else if ( format.find("1Ddarray") != std::string::npos ) {
+    gen_filetype = darray1D;
+  } else if ( format.find("2Ddarray") != std::string::npos ) {
+    if ( format.find("contiguous") != std::string::npos ) {
+      gen_filetype = darray2D_contiguous;
+    } else {
+      gen_filetype = darray2D;
+    }
+  } else {
+    throw std::invalid_argument("Choose a file view form: 1Dsubarray, 1Ddarray, 2Ddarray.");
+  }
+  return gen_filetype;
 }
 
 IOmpiLevel3::IOmpiLevel3( const Settings& s, MPI_Comm communicator )
-  : _fileview{ s, communicator }
+  : _fileview{ s, communicator, choose_layout( s.format ) }
   , _communicator{ communicator }
   , _outputfilename{ MakeFilename( s.outputfile, "mpi_write_all" ) }
   , _buffercount{ static_cast<int>( s.ndx * s.ndy ) }
@@ -92,20 +64,18 @@ void IOmpiLevel3::write( int step,
                  MPI_INFO_NULL,
                  &filehandle_onestep );
 
-  MPI_Offset displacement = 0;
+  MPI_File_set_view( filehandle_onestep,
+                     0,
+                     MPI_DOUBLE,
+                     _fileview._filetype,
+                     "native",
+                     MPI_INFO_NULL );
   for ( const auto& iteration : ht.m_TIterations ) {
-    MPI_File_set_view( filehandle_onestep,
-                       displacement,
-                       MPI_DOUBLE,
-                       _fileview._filetype,
-                       "native",
-                       MPI_INFO_NULL );
     MPI_File_write_all( filehandle_onestep,
                         iteration.data(),
                         _buffercount,
                         MPI_DOUBLE,
                         MPI_STATUS_IGNORE );
-    displacement += _fileview._disp;
   }
   
   MPI_File_close( &filehandle_onestep );
@@ -125,20 +95,18 @@ void IOmpiLevel3::read( const int step,
                  MPI_INFO_NULL,
                  &filehandle_onestep );
 
-  MPI_Offset displacement = 0;
+  MPI_File_set_view( filehandle_onestep,
+                     0,
+                     MPI_DOUBLE,
+                     _fileview._filetype,
+                     "native",
+                     MPI_INFO_NULL );
   for ( auto& iteration : buffer ) {
-    MPI_File_set_view( filehandle_onestep,
-                       displacement,
-                       MPI_DOUBLE,
-                       _fileview._filetype,
-                       "native",
-                       MPI_INFO_NULL );
     MPI_File_read_all( filehandle_onestep,
                        iteration.data(),
                        _buffercount,
                        MPI_DOUBLE,
                        MPI_STATUS_IGNORE );
-    displacement += _fileview._disp;
   }
 
   MPI_File_close( &filehandle_onestep );
