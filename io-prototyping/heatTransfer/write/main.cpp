@@ -32,6 +32,7 @@ void printUsage() {
                "iterations\n"
             << "  config: XML config file to use\n"
             << "  output: name of output data file/stream\n"
+            << "  scheme: name of IO scheme\n"
             << "  N:      number of processes in X dimension\n"
             << "  M:      number of processes in Y dimension\n"
             << "  nx:     local array size in X dimension per processor\n"
