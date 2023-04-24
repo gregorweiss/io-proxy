@@ -54,11 +54,28 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
     steps = convertToUint("steps", argv[8]);
     iterations = convertToUint("iterations", argv[9]);
 
-    if ( argc == 11 ) {
+    if ( argc >= 11 ) {
         if ( std::string(argv[10]) == std::string("read") ) {
             read = true;
         }
+        if ( std::string(argv[10]) == std::string("remove") ) {
+            remove = true;
+        }
     }
+
+    if ( argc >= 12 ) {
+        if ( std::string(argv[10]) == std::string("read")
+             ||
+             std::string(argv[11]) == std::string("read")) {
+            read = true;
+        }
+        if ( std::string(argv[10]) == std::string("remove")
+             ||
+             std::string(argv[11]) == std::string("remove")) {
+            remove = true;
+        }
+    }
+
 
     if (npx * npy != this->nproc)
     {

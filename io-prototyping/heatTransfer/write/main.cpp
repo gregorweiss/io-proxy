@@ -153,17 +153,19 @@ int main( int argc, char* argv[] ) {
         }
       }
 
-      MPI_Barrier(MPI_COMM_WORLD);
-      measTime = MPI_Wtime();
+      if ( settings.remove ) {
+        MPI_Barrier(MPI_COMM_WORLD);
+        measTime = MPI_Wtime();
 
-      io.remove( t );
+        io.remove( t );
 
-      MPI_Barrier(MPI_COMM_WORLD);
-      measTime = MPI_Wtime() - measTime;
+        MPI_Barrier(MPI_COMM_WORLD);
+        measTime = MPI_Wtime() - measTime;
 
-      MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-      if ( rank == 0 ) {
-        printTime( "Removing step " + std::to_string( t ), maxTime );
+        MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+        if ( rank == 0 ) {
+          printTime( "Removing step " + std::to_string( t ), maxTime );
+        }
       }
     }
 
