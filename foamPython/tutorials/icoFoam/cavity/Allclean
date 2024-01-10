@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# Clean times
-rm -r [1-9]* > /dev/null 2>&1 ; rm -r 0.[0-9]* > /dev/null 2>&1
-
-# Clean mesh
-rm -r constant/polyMesh
