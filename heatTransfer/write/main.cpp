@@ -8,7 +8,9 @@
  *
  * Created on: Feb 2017
  *     Author: Norbert Podhorszki
- * Modified on: Nov 2021 by Gregor Weiss
+ *
+ *   Modified: 2021-2024
+ *     Author: Gregor Weiss
  *
  */
 #include <mpi.h>

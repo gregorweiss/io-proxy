@@ -36,6 +36,4 @@ set(ALL_LIBS "${SIONLIB_LIBRARIES}")
 set(ALL_INCLUDES "${ALL_INCLUDES} ${SIONLIB_INCLUDE}")
 
 add_subdirectory(write)
-add_subdirectory(read)
-#add_subdirectory(read_fileonly)
-#add_subdirectory(inline)
+

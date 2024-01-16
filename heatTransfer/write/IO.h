@@ -6,6 +6,9 @@
  *
  *  Created on: Feb 2017
  *      Author: Norbert Podhorszki
+ *
+ *    Modified: 2022-2024
+ *      Author: Gregor Weiss
  */
 
 #ifndef IO_H_

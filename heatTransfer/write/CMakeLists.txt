@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_executable(heatTransfer_write
+add_executable(heatTransfer
         main.cpp
         HeatTransfer.cpp
         Settings.cpp
@@ -18,7 +18,7 @@ add_executable(heatTransfer_write
         IOsion.cpp
         IOstream.cpp
         )
-target_link_libraries(heatTransfer_write
+target_link_libraries(heatTransfer
         ${ADIOS2_LIB}
         MPI::MPI_C
         ${CMAKE_THREAD_LIBS_INIT}
