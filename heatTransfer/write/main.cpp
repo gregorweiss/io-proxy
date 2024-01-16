@@ -30,10 +30,10 @@
 #include "Settings.h"
 
 void printUsage() {
-  std::cout << "Usage: heatTransfer  config   output  N  M   nx  ny   steps "
+  std::cout << "Usage: heatTransfer config.xml output.bp scheme N M nx ny steps iterations"
                "iterations\n"
             << "  config: XML config file to use\n"
-            << "  output: name of output data file/stream\n"
+            << "  output: name of output data file\n"
             << "  scheme: name of IO scheme\n"
             << "  N:      number of processes in X dimension\n"
             << "  M:      number of processes in Y dimension\n"
