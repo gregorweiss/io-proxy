@@ -18,8 +18,10 @@ find_package(ADIOS2 REQUIRED)
 
 # Set the ADIOS2 library name
 set(ADIOS2_LIB adios2)
-if (ADIOS2_VERSION GREATER_EQUAL 2.6)
+if (ADIOS2_VERSION_MAJOR GREATER_EQUAL 2)
+  if (ADIOS2_VERSION_MINOR GREATER_EQUAL 6)
     set(ADIOS2_LIB adios2::cxx11_mpi)
+  endif ()
 endif ()
 
 # These includes publish function names.
