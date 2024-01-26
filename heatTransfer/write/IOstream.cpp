@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <cassert>
+
 IOstream::IOstream( const Settings& s, MPI_Comm comm )
   : _filename{ MakeFilename( s.outputfile, ".dat", s.rank ) } {}
 

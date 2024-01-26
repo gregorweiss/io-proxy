@@ -4,3 +4,6 @@ run
 
 # Temporary files
 *.swp
+
+# IDE files
+.vscode
