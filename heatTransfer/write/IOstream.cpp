@@ -49,10 +49,11 @@ void IOstream::read( const int step,
 
   auto read_size = s.ndx * s.ndy;
   for ( auto& iteration : buffer ) {
-    fread( reinterpret_cast<char*>(iteration.data()),
-           sizeof( double ),
-           read_size,
-           _filestream );
+    size_t count = fread( reinterpret_cast<char*>(iteration.data()),
+                          sizeof( double ),
+                          read_size,
+                          _filestream );
+    assert(count==read_size);
   }
 
   fclose( _filestream );
