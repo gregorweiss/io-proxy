@@ -171,7 +171,9 @@ int main( int argc, char* argv[] ) {
       }
     }
 
-    RemoveProcFolders( rank );
+    if ( settings.remove ) {
+      RemoveProcFolders( rank );
+    }
     
     MPI_Barrier(MPI_COMM_WORLD);
     totalTime = MPI_Wtime() - totalTime;

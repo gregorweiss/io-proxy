@@ -24,8 +24,9 @@ std::string MakeProcFolders( int rank ) {
 // Remove processor folders
 void RemoveProcFolders( int rank ) {
     std::filesystem::path path_name = "processor" + std::to_string(rank) + "/";
-    std::filesystem::exists( path_name );
-    std::filesystem::remove( path_name );
+    if( std::filesystem::exists( path_name ) ) {
+      std::filesystem::remove( path_name );
+    }
 }
 
 // Generate a file name from the outputfile string and the arguments
