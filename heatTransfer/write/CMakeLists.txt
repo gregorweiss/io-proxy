@@ -5,6 +5,7 @@
 
 add_executable(heatTransfer
         main.cpp
+        ndarray.cpp
         HeatTransfer.cpp
         Settings.cpp
         FileView.cpp

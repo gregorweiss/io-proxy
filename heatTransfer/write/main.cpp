@@ -29,6 +29,8 @@
 #include "IO.h"
 #include "Settings.h"
 
+#include "ndarray.h"
+
 void printUsage() {
   std::cout << "Usage: heatTransfer config.xml output.bp scheme N M nx ny steps iterations"
                "iterations\n"

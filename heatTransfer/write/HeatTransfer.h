@@ -18,6 +18,8 @@
 
 #include "Settings.h"
 
+#include "ndarray.h"
+
 class HeatTransfer
 {
 public:
@@ -62,6 +64,9 @@ private:
     // Track which data array is active
     double **m_TCurrent;
     double **m_TNext;
+
+    ndarray<double> _TCurrent;
+    ndarray<double> _TNext;
 };
 
 #endif /* HEATTRANSFER_H_ */
