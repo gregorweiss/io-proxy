@@ -28,12 +28,12 @@ void subarray1D( const Settings& settings, MPI_Datatype& filetype ) {
   // to avoid integer overflow in subarray
   // if the global array size is to large
   MPI_Datatype contiguous_array;
-  MPI_Type_contiguous( static_cast<int>( settings.ndx * settings.ndy ),
+  MPI_Type_contiguous( static_cast<int>( settings.ndx * settings.ndy * settings.ndz ),
                        MPI_DOUBLE,
                        &contiguous_array );
   MPI_Type_commit( &contiguous_array );
   // Create 1D subarray based on the contiguous array
-  int sizes[1] = { static_cast<int>( settings.npx * settings.npy ) };
+  int sizes[1] = { static_cast<int>( settings.npx * settings.npy * settings.ndz ) };
   int subsizes[1] = { 1 };
   int starts[1] = { static_cast<int>( settings.rank ) };
   MPI_Type_create_subarray( 1,
@@ -47,9 +47,9 @@ void subarray1D( const Settings& settings, MPI_Datatype& filetype ) {
 }
 
 void subarray2D( const Settings& settings, MPI_Datatype& filetype ) {
-  int sizes[2] = { static_cast<int>( settings.gndx ), static_cast<int>( settings.gndy ) };
-  int subsizes[2] = { static_cast<int>( settings.ndx ), static_cast<int>( settings.ndy ) };
-  int starts[2] = { static_cast<int>( settings.offsx ), static_cast<int>( settings.offsy ) };
+  int sizes[3] = { static_cast<int>( settings.gndx ), static_cast<int>( settings.gndy ), static_cast<int>( settings.gndz ) };
+  int subsizes[3] = { static_cast<int>( settings.ndx ), static_cast<int>( settings.ndy ), static_cast<int>( settings.ndz ) };
+  int starts[3] = { static_cast<int>( settings.offsx ), static_cast<int>( settings.offsy ), static_cast<int>( settings.offsz ) };
   MPI_Type_create_subarray( 2,
                             sizes,
                             subsizes,
@@ -92,15 +92,15 @@ void darray1D( const Settings& settings, MPI_Datatype& filetype ) {
   // to avoid integer overflow in subarray
   // if the global array size is to large
   MPI_Datatype contiguous_array;
-  MPI_Type_contiguous( static_cast<int>( settings.ndx * settings.ndy ),
+  MPI_Type_contiguous( static_cast<int>( settings.ndx * settings.ndy * settings.ndz ),
                        MPI_DOUBLE,
                        &contiguous_array );
   MPI_Type_commit( &contiguous_array );
   // Create 1D subarray based on the contiguous array
-  int gsizes[] = { static_cast<int>( settings.npx * settings.npy ) };
+  int gsizes[] = { static_cast<int>( settings.npx * settings.npy * settings.npz ) };
   int distribs[] = { MPI_DISTRIBUTE_BLOCK };
   int dargs[] = { MPI_DISTRIBUTE_DFLT_DARG };
-  int psizes[] = { static_cast<int>( settings.npx * settings.npy ) };
+  int psizes[] = { static_cast<int>( settings.npx * settings.npy * settings.npz ) };
   MPI_Type_create_darray( settings.nproc,
                           settings.rank,
                           1,
@@ -116,10 +116,10 @@ void darray1D( const Settings& settings, MPI_Datatype& filetype ) {
 }
 
 void darray2D( const Settings& settings, MPI_Datatype& filetype ) {
-  int gsizes[] = { static_cast<int>( settings.gndx ), static_cast<int>( settings.gndy ) };
+  int gsizes[] = { static_cast<int>( settings.gndx ), static_cast<int>( settings.gndy ), static_cast<int>( settings.gndz ) };
   int distribs[] = { MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_BLOCK };
   int dargs[] = { MPI_DISTRIBUTE_DFLT_DARG, MPI_DISTRIBUTE_DFLT_DARG };
-  int psizes[] = { static_cast<int>( settings.npx ), static_cast<int>( settings.npy ) };
+  int psizes[] = { static_cast<int>( settings.npx ), static_cast<int>( settings.npy ), static_cast<int>( settings.npz ) };
   MPI_Type_create_darray( settings.nproc,
                           settings.rank,
                           2,

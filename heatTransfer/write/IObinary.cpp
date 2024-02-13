@@ -32,7 +32,7 @@ void IObinary::write( int step,
   auto filename = MakeFilename( m_outputfilename, ".dat", s.rank, step );
   _filestream.open( filename, std::ios_base::out );
   
-  auto write_size = static_cast<std::streamsize>( s.ndx * s.ndy * sizeof( double ) );
+  auto write_size = static_cast<std::streamsize>( s.ndx * s.ndy * s.ndz * sizeof( double ) );
   for ( const auto& iteration : ht.m_TIterations ) {
     _filestream.write( reinterpret_cast<const char*>(iteration.data()),
                        write_size );
@@ -48,7 +48,7 @@ void IObinary::read( const int step,
   auto filename = MakeFilename( m_outputfilename, ".dat", s.rank, step );
   _filestream.open( filename, std::ios_base::in );
 
-  auto read_size = static_cast<std::streamsize>( s.ndx * s.ndy * sizeof( double ) );
+  auto read_size = static_cast<std::streamsize>( s.ndx * s.ndy * s.ndz * sizeof( double ) );
   for ( auto& iteration : buffer ) {
     _filestream.read( reinterpret_cast<char*>( iteration.data() ),
                       read_size );

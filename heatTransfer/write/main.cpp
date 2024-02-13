@@ -96,7 +96,6 @@ int main( int argc, char* argv[] ) {
     io.chooseFormat( settings.format );
 
     ht.init( false );
-    ht.heatEdges();
     ht.exchange(MPI_COMM_WORLD);
 
     for ( unsigned int t = 1; t <= settings.steps; ++t )
@@ -109,9 +108,9 @@ int main( int argc, char* argv[] ) {
       {
         ht.iterate();
         ht.exchange(MPI_COMM_WORLD);
-        ht.heatEdges();
         ht.store();
       }
+      //ht.printT("humpa", MPI_COMM_WORLD);
 
       MPI_Barrier(MPI_COMM_WORLD);
       measTime = MPI_Wtime() - measTime;
@@ -139,7 +138,7 @@ int main( int argc, char* argv[] ) {
         IO<IOVariant> istream( settings, MPI_COMM_WORLD );
         istream.chooseFormat( settings.format );
         std::vector<std::vector<double> > input( settings.iterations,
-                                                 std::vector<double>( settings.ndx * settings.ndy, -1.0 ) );
+                                                 std::vector<double>( settings.ndx * settings.ndy * settings.ndz, -1.0 ) );
 
         MPI_Barrier(MPI_COMM_WORLD);
         measTime = MPI_Wtime();
@@ -150,6 +149,24 @@ int main( int argc, char* argv[] ) {
         measTime = MPI_Wtime() - measTime;
 
         checkEquality( input, ht.m_TIterations );
+
+/*
+        std::cout << "input " <<std::endl;
+        for ( auto& vec : input )
+        {
+          for ( auto& val : vec )
+          { std::cout << val << ", ";}
+        }
+        std::cout << "\ninput \n" <<std::endl;
+
+        std::cout << "ht.m_TIterations " <<std::endl;
+        for ( auto& vec : ht.m_TIterations )
+        {
+          for ( auto& val : vec )
+          { std::cout << val << ", ";}
+        }
+        std::cout << "\nht.m_TIteratinos \n" <<std::endl;
+        */
 
         MPI_Reduce( &measTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
         if ( rank == 0 ) {

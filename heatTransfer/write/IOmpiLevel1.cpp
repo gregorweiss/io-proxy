@@ -20,8 +20,8 @@
 IOmpiLevel1::IOmpiLevel1( const Settings& s, MPI_Comm comm )
   : _communicator{ comm }
   , _outputfilename{ MakeFilename( s.outputfile, ".mpiio_write" ) }
-  , _disp{ static_cast<MPI_Offset>( sizeof(double) * s.gndx * s.gndy ) }
-  , _buffercount{ static_cast<int>( s.ndx * s.ndy ) }
+  , _disp{ static_cast<MPI_Offset>( sizeof(double) * s.gndx * s.gndy * s.gndz ) }
+  , _buffercount{ static_cast<int>( s.ndx * s.ndy * s.ndz ) }
   , _rank{ getRank( comm ) }
   , _nprocs{ getNProcs( comm ) } {}
 

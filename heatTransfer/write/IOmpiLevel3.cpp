@@ -46,7 +46,7 @@ IOmpiLevel3::IOmpiLevel3( const Settings& s, MPI_Comm communicator )
   : _fileview{ s, communicator, choose_layout( s.format ) }
   , _communicator{ communicator }
   , _outputfilename{ MakeFilename( s.outputfile, "mpi_write_all" ) }
-  , _buffercount{ static_cast<int>( s.ndx * s.ndy ) }
+  , _buffercount{ static_cast<int>( s.ndx * s.ndy * s.ndz ) }
   , _rank{ getRank( _communicator ) }
   , _nprocs{ getNProcs( _communicator ) } {}
 

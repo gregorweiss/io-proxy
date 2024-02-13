@@ -125,12 +125,13 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
         rank_right = rank + npx;
 
     if (posz == 0)
-        rank_front = -1;
-    else
-        rank_front = rank - (npx * npy);
-
-    if (posz == npz - 1)
         rank_back = -1;
     else
-        rank_back = rank + (npx * npy);
+        rank_back = rank - (npx * npy);
+
+    if (posz == npz - 1)
+        rank_front = -1;
+    else
+        rank_front = rank + (npx * npy);
+
 }

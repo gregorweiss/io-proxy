@@ -30,7 +30,7 @@ void IOstream::write( int step,
   _filename = MakeFilename( s.outputfile, ".dat", s.rank, step );
   _filestream = fopen( _filename.c_str(), "w" );
   
-  auto write_size = s.ndx * s.ndy;
+  auto write_size = s.ndx * s.ndy * s.ndz;
   for ( const auto& iteration : ht.m_TIterations ) {
     fwrite( reinterpret_cast<const char*>(iteration.data()),
             sizeof( double ),
@@ -49,7 +49,7 @@ void IOstream::read( const int step,
   _filename = MakeFilename( s.outputfile, ".dat", s.rank, step );
   _filestream = fopen( _filename.c_str(), "r" );
 
-  auto read_size = s.ndx * s.ndy;
+  auto read_size = s.ndx * s.ndy * s.ndz;
   for ( auto& iteration : buffer ) {
     size_t count = fread( reinterpret_cast<char*>(iteration.data()),
                           sizeof( double ),

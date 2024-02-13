@@ -39,7 +39,7 @@ void IOsion::write( int step,
   for ( const auto& iteration : ht.m_TIterations ) {
     sion_fwrite( iteration.data(),
                  sizeof( double ),
-                 s.ndx * s.ndy,
+                 s.ndx * s.ndy * s.ndz,
                  _sionFileId );
   }
   
@@ -65,7 +65,7 @@ void IOsion::read( const int step,
   for ( auto& iteration : buffer ) {
     sion_fread( iteration.data(),
                 sizeof( double ),
-                s.ndx * s.ndy,
+                s.ndx * s.ndy * s.ndz,
                 _sionFileId );
   }
 
