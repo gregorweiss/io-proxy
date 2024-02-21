@@ -90,9 +90,9 @@ adios2::Variable<double>& IOadios2::defineVariableBySettings( adios2::Variable<d
                                                               std::string identifier,
                                                               const Settings& settings ) {
   retVariable = ioComponent.DefineVariable<double>( identifier,
-                                                    { settings.gndx, settings.gndy, settings.gndz },   // global dimensions
-                                                    { settings.offsx, settings.offsy, settings.offsz }, // global offset
-                                                    { settings.ndx, settings.ndy, settings.ndz } );   // local size
+                                                    { settings.gndz, settings.gndy, settings.gndx },   // global dimensions
+                                                    { settings.offsz, settings.offsy, settings.offsx }, // global offset
+                                                    { settings.ndz, settings.ndy, settings.ndx } );   // local size
   return retVariable;
 }
 
