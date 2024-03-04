@@ -76,6 +76,31 @@ void checkEquality( std::vector<std::vector<double> >& input1,
   }
 }
 
+
+void peakSignalToNoise( std::vector<double>& ref,
+                        std::vector<double>& org ) {
+  auto peakVal = std::numeric_limits<double>::lowest();
+  double mse = 0;
+  double psnr = 0;
+
+  auto minVal = std::numeric_limits<double>::max();
+  auto maxVal = std::numeric_limits<double>::lowest();
+
+  for ( size_t i = 0; i < ref.size(); ++i ) {
+    minVal = std::min(minVal, ref[i]);
+    maxVal = std::max(maxVal, ref[i]);
+    double sum = ref[i] - org[i];
+    mse += sum * sum;
+  }
+  peakVal = std::max(peakVal, maxVal - minVal);
+  mse /= static_cast<double>(ref.size());
+  psnr = 20 * log10(peakVal/(2 * sqrt(mse)));
+  
+  std::cout << "MSE : " << mse << std::endl;
+  std::cout << "PSNR : " << psnr << std::endl;
+}
+
+
 int main( int argc, char* argv[] ) {
   
   MPI_Init( &argc, &argv );
@@ -149,6 +174,7 @@ int main( int argc, char* argv[] ) {
         measTime = MPI_Wtime() - measTime;
 
         checkEquality( input, ht.m_TIterations );
+        peakSignalToNoise( input[0], ht.m_TIterations[0] );
 
 /*
         std::cout << "input " <<std::endl;
