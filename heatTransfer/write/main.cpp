@@ -39,8 +39,10 @@ void printUsage() {
             << "  scheme: name of IO scheme\n"
             << "  N:      number of processes in X dimension\n"
             << "  M:      number of processes in Y dimension\n"
+            << "  L:      number of processes in Z dimension\n"
             << "  nx:     local array size in X dimension per processor\n"
             << "  ny:     local array size in Y dimension per processor\n"
+            << "  nz:     local array size in Z dimension per processor\n"
             << "  steps:  the total number of steps to output\n"
             << "  iterations: one step consist of this many iterations\n\n";
 }

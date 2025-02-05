@@ -15,7 +15,7 @@ make
 
 Parallel execution with MPI
 ```
-mpirun -np 12 heatTransfer heat_bp4.xml heat.bp adios2 4 3 1024 1024 10 1
+mpirun -np 24 heatTransfer heat_bp4.xml heat.bp adios2 4 3 2 1024 1024 1024 10 1
 ```
 
 #### Options
@@ -27,8 +27,10 @@ Writer usage:  heatTransfer config.xml output scheme N M nx ny steps iterations
   scheme: name of IO scheme
   N:      number of processes in X dimension
   M:      number of processes in Y dimension
+  L:      number of processes in Z dimension
   nx:     local array size in X dimension per processor
   ny:     local array size in Y dimension per processor
+  nz:     local array size in Z dimension per processor
   steps:  the total number of steps to output
   iterations: one step consist of this many iterations
 ```
