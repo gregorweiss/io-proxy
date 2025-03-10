@@ -14,7 +14,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(MPI REQUIRED)
-find_package(ADIOS2 REQUIRED)
+
+include(cmake/thirdparty.cmake)
 
 # Set the ADIOS2 library name
 set(ADIOS2_LIB adios2)
