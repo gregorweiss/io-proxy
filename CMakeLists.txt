@@ -37,5 +37,5 @@ endforeach ()
 set(ALL_LIBS "${SIONLIB_LIBRARIES}")
 set(ALL_INCLUDES "${ALL_INCLUDES} ${SIONLIB_INCLUDE}")
 
-add_subdirectory(write)
+add_subdirectory(src)
 
