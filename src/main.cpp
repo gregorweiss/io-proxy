@@ -9,7 +9,7 @@
  * Created on: Feb 2017
  *     Author: Norbert Podhorszki
  *
- *   Modified: 2021-2024
+ *   Modified: 2021-2025
  *     Author: Gregor Weiss
  *
  */
@@ -32,8 +32,7 @@
 #include "ndarray.h"
 
 void printUsage() {
-  std::cout << "Usage: heatTransfer config.xml output.bp scheme N M nx ny steps iterations"
-               "iterations\n"
+  std::cout << "Usage: heatTransfer config.xml output.bp scheme N M L nx ny nz steps iterations\n"
             << "  config: XML config file to use\n"
             << "  output: name of output data file\n"
             << "  scheme: name of IO scheme\n"
@@ -44,7 +43,8 @@ void printUsage() {
             << "  ny:     local array size in Y dimension per processor\n"
             << "  nz:     local array size in Z dimension per processor\n"
             << "  steps:  the total number of steps to output\n"
-            << "  iterations: one step consist of this many iterations\n\n";
+            << "  iterations: one step consist of this many iterations\n\n"
+            << "Note that N*M*L must be equal to the number of MPI processes.\n\n";
 }
 
 

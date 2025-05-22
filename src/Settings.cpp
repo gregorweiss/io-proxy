@@ -40,7 +40,7 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
 {
     if (argc < 9)
     {
-        throw std::invalid_argument("Not enough arguments");
+        throw std::invalid_argument("\nNot enough arguments\n");
     }
     this->nproc = (unsigned int)nproc;
 
@@ -81,7 +81,7 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
 
     if (npx * npy * npz != this->nproc)
     {
-        throw std::invalid_argument("N*M must equal the number of processes");
+        throw std::invalid_argument("N*M*L must equal the number of processes");
     }
 
     // calculate global array size and the local offsets in that global space
